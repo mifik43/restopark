@@ -2,7 +2,7 @@ import sys
 import os
 from app import app, db
 from models import Category, MenuItem
-from menu_data import MENU  # импорт готового словаря
+from menu_data import menu_data  # импорт готового словаря
 
 def populate_db(menu_data):
     with app.app_context():
@@ -73,4 +73,4 @@ def add_item(item_data, category_id):
 
 if __name__ == '__main__':
     print("Заполнение базы из menu_data.MENU...")
-    populate_db(MENU)
+    populate_db(menu_data)
