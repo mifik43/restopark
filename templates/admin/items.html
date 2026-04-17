@@ -17,7 +17,7 @@
                 <th>Название</th>
                 <th>Категория</th>
                 <th>Цена</th>
-                <th>Доступно</th>
+                <th>В наличии</th>
                 <th>Порядок</th>
                 <th>Действия</th>
             </tr>
@@ -28,9 +28,9 @@
                 <td>{{ item.id }}</td>
                 <td>
                     {% if item.image_path %}
-                        <img src="{{ item.image_path }}" alt="{{ item.name }}" class="dish-image-thumb">
+                        <img src="{{ item.image_path }}" alt="{{ item.name }}" class="img-thumbnail" style="max-height: 50px; max-width: 70px; object-fit: contain;">
                     {% else %}
-                        <i class="bi bi-image text-muted"></i>
+                        <i class="bi bi-image text-muted fs-4"></i>
                     {% endif %}
                 </td>
                 <td>{{ item.name }}</td>
@@ -45,10 +45,10 @@
                 </td>
                 <td>{{ item.order }}</td>
                 <td class="table-actions">
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editItemModal{{ item.id }}">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editItemModal{{ item.id }}" title="Редактировать">
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <a href="{{ url_for('admin_item_delete', id=item.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Удалить блюдо?')">
+                    <a href="{{ url_for('admin_item_delete', id=item.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Удалить блюдо?')" title="Удалить">
                         <i class="bi bi-trash"></i>
                     </a>
                 </td>
@@ -66,7 +66,8 @@
                                 {% include "admin/_item_form.html" %}
                             </div>
                             <div class="modal-footer">
-                                <button type="submit" class="btn btn-primary">Сохранить</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
                             </div>
                         </div>
                     </form>
@@ -90,7 +91,8 @@
                     {% include "admin/_item_form.html" %}
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Добавить</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Добавить блюдо</button>
                 </div>
             </div>
         </form>

@@ -1,11 +1,11 @@
 <div class="row">
     <div class="col-md-6">
         <div class="mb-3">
-            <label class="form-label">Название *</label>
+            <label class="form-label">Название <span class="text-danger">*</span></label>
             <input type="text" name="name" value="{{ item.name if item else '' }}" class="form-control" required>
         </div>
         <div class="mb-3">
-            <label class="form-label">Категория *</label>
+            <label class="form-label">Категория <span class="text-danger">*</span></label>
             <select name="category_id" class="form-select" required>
                 <option value="">Выберите категорию</option>
                 {% for cat in categories recursive %}
@@ -20,50 +20,51 @@
         </div>
         <div class="mb-3">
             <label class="form-label">Описание</label>
-            <textarea name="description" class="form-control" rows="3">{{ item.description if item else '' }}</textarea>
+            <textarea name="description" class="form-control" rows="3" placeholder="Краткое описание блюда">{{ item.description if item else '' }}</textarea>
         </div>
         <div class="row">
             <div class="col">
-                <label class="form-label">Цена (₽) *</label>
+                <label class="form-label">Цена (₽) <span class="text-danger">*</span></label>
                 <input type="number" name="price" value="{{ item.price if item else '' }}" class="form-control" required>
             </div>
             <div class="col">
-                <label class="form-label">Вес (гр)</label>
-                <input type="text" name="weight" value="{{ item.weight if item else '' }}" class="form-control">
+                <label class="form-label">Вес (грамм)</label>
+                <input type="text" name="weight" value="{{ item.weight if item else '' }}" class="form-control" placeholder="250г">
             </div>
             <div class="col">
-                <label class="form-label">Объем (мл)</label>
-                <input type="text" name="volume" value="{{ item.volume if item else '' }}" class="form-control">
+                <label class="form-label">Объём (мл)</label>
+                <input type="text" name="volume" value="{{ item.volume if item else '' }}" class="form-control" placeholder="300мл">
             </div>
         </div>
         <div class="mb-3">
-            <label class="form-label">Алкоголь (%)</label>
-            <input type="text" name="alcohol_content" value="{{ item.alcohol_content if item else '' }}" class="form-control">
+            <label class="form-label">Содержание алкоголя (%)</label>
+            <input type="text" name="alcohol_content" value="{{ item.alcohol_content if item else '' }}" class="form-control" placeholder="4.7%">
         </div>
     </div>
     <div class="col-md-6">
         <div class="mb-3">
-            <label class="form-label">Изображение</label>
-            <input type="file" name="image" class="form-control" accept="image/*">
-            {% if item and item.image_path %}
-                <div class="mt-2">
-                    <img src="{{ item.image_path }}" style="max-height: 100px;">
-                    <p class="text-muted small">Оставьте пустым, чтобы не менять</p>
-                </div>
-            {% endif %}
+    <label class="form-label">Изображение</label>
+    <input type="file" name="image" class="form-control" accept="image/*">
+    {% if item and item.image_path %}
+        <div class="mt-2">
+            <img src="{{ item.image_path }}" style="max-height: 100px;" class="img-thumbnail">
+            <p class="text-muted small">Оставьте пустым, чтобы не менять</p>
         </div>
+    {% endif %}
+</div>
         <div class="mb-3">
-            <label class="form-label">Иконка (FontAwesome класс)</label>
+            <label class="form-label">Иконка (класс FontAwesome)</label>
             <input type="text" name="icon_class" value="{{ item.icon_class if item else 'fa-utensils' }}" class="form-control">
-            <small class="text-muted">Например: fa-pizza-slice, fa-cocktail</small>
+            <small class="text-muted">Например: fa-pizza-slice, fa-cocktail, fa-mug-hot</small>
         </div>
         <div class="row">
             <div class="col">
-                <label class="form-label">Порядок</label>
+                <label class="form-label">Порядок сортировки</label>
                 <input type="number" name="order" value="{{ item.order if item else 0 }}" class="form-control">
+                <small class="text-muted">Меньше — выше в списке</small>
             </div>
             <div class="col">
-                <label class="form-label">Доступно</label>
+                <label class="form-label">Доступность</label>
                 <div class="form-check form-switch mt-2">
                     <input class="form-check-input" type="checkbox" name="is_available" {% if not item or item.is_available %}checked{% endif %}>
                     <label class="form-check-label">Показывать в меню</label>
@@ -71,12 +72,24 @@
             </div>
         </div>
         <hr>
-        <h6>Пищевая ценность (опционально)</h6>
+        <h6>Пищевая ценность (необязательно)</h6>
         <div class="row">
-            <div class="col"><label class="form-label">Ккал</label><input type="text" name="calories" value="{{ item.calories if item else '' }}" class="form-control"></div>
-            <div class="col"><label class="form-label">Белки</label><input type="text" name="proteins" value="{{ item.proteins if item else '' }}" class="form-control"></div>
-            <div class="col"><label class="form-label">Жиры</label><input type="text" name="fats" value="{{ item.fats if item else '' }}" class="form-control"></div>
-            <div class="col"><label class="form-label">Углеводы</label><input type="text" name="carbs" value="{{ item.carbs if item else '' }}" class="form-control"></div>
+            <div class="col">
+                <label class="form-label">Калории (ккал)</label>
+                <input type="text" name="calories" value="{{ item.calories if item else '' }}" class="form-control" placeholder="410.5">
+            </div>
+            <div class="col">
+                <label class="form-label">Белки (г)</label>
+                <input type="text" name="proteins" value="{{ item.proteins if item else '' }}" class="form-control" placeholder="7.1">
+            </div>
+            <div class="col">
+                <label class="form-label">Жиры (г)</label>
+                <input type="text" name="fats" value="{{ item.fats if item else '' }}" class="form-control" placeholder="24.3">
+            </div>
+            <div class="col">
+                <label class="form-label">Углеводы (г)</label>
+                <input type="text" name="carbs" value="{{ item.carbs if item else '' }}" class="form-control" placeholder="45.6">
+            </div>
         </div>
     </div>
 </div>

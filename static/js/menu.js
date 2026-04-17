@@ -1,4 +1,4 @@
-// static/js/menu.js — полная версия с API
+// static/js/menu.js — универсальная версия с поддержкой любых подгрупп
 const SHOW_NUTRITION = false;
 const SHOW_WEIGHT = false;
 const USE_DISH_IMAGES = true;
@@ -6,7 +6,7 @@ const SHOW_ALCOHOL_CONTENT = true;
 
 let cart = JSON.parse(localStorage.getItem('cart')) || [];
 let menuData = {};
-let currentDrinksSubgroupId = null;
+let currentSubgroupId = null;
 
 // ---------- Загрузка данных с сервера ----------
 async function loadMenuData() {
@@ -14,11 +14,11 @@ async function loadMenuData() {
         const response = await fetch('/api/categories');
         const categories = await response.json();
 
-        // Построение структуры menuData из плоского списка
+        // Построение структуры menuData
         menuData = {};
         const categoryMap = {};
 
-        // Сначала сохраняем все категории в map
+        // Сохраняем все категории в map
         categories.forEach(cat => {
             categoryMap[cat.id] = {
                 ...cat,
@@ -56,6 +56,8 @@ async function loadMenuData() {
             }
         });
 
+        console.log('menuData loaded:', menuData); // для отладки
+
         initNavigation();
         renderMenuSections();
         updateCartCount();
@@ -68,7 +70,7 @@ async function loadMenuData() {
     }
 }
 
-// Поиск блюда по ID во всей структуре
+// Поиск блюда по ID
 function findItemById(itemId) {
     for (const catSlug in menuData) {
         const cat = menuData[catSlug];
@@ -98,7 +100,6 @@ function initNavigation() {
     Object.keys(menuData).forEach((categoryId, index) => {
         const category = menuData[categoryId];
         
-        // Десктоп
         const desktopLink = document.createElement('a');
         desktopLink.href = '#';
         desktopLink.dataset.category = categoryId;
@@ -111,7 +112,6 @@ function initNavigation() {
         });
         categoryNav.appendChild(desktopLink);
 
-        // Мобильная
         const mobileLink = document.createElement('a');
         mobileLink.href = '#';
         mobileLink.dataset.category = categoryId;
@@ -185,14 +185,15 @@ function renderMenuSections() {
 
         let itemsHTML = '';
         
-        if (category.subgroups && category.type === 'dropdown') {
-            let tabsHTML = '<div class="drinks-tabs-container"><div class="drinks-tabs" id="drinksTabs">';
+        if (category.subgroups && Object.keys(category.subgroups).length > 0) {
+            // Категория с подгруппами (например, Напитки)
+            let tabsHTML = '<div class="drinks-tabs-container"><div class="drinks-tabs">';
             Object.keys(category.subgroups).forEach(subgroupId => {
                 const subgroup = category.subgroups[subgroupId];
                 const icon = subgroup.icon || 'fa-glass-whiskey';
                 tabsHTML += `<div class="drinks-tab" data-subgroup="${subgroupId}"><i class="fas ${icon}"></i>${subgroup.title}</div>`;
             });
-            tabsHTML += '</div><div class="drinks-content"><div class="menu-grid" id="drinksMenuGrid"></div></div></div>';
+            tabsHTML += '</div><div class="drinks-content"><div class="menu-grid" id="subgroupMenuGrid"></div></div></div>';
             
             let totalItems = 0;
             Object.values(category.subgroups).forEach(sub => totalItems += sub.items.length);
@@ -201,15 +202,18 @@ function renderMenuSections() {
                 ${tabsHTML}
             `;
             
+            // Загружаем первую подгруппу
             const firstSub = Object.keys(category.subgroups)[0];
             if (firstSub) {
                 setTimeout(() => {
-                    loadDrinksSubgroup(firstSub);
-                    currentDrinksSubgroupId = firstSub;
-                    document.querySelector(`.drinks-tab[data-subgroup="${firstSub}"]`).classList.add('active');
+                    loadSubgroupItems(category, firstSub);
+                    currentSubgroupId = firstSub;
+                    const firstTab = document.querySelector(`.drinks-tab[data-subgroup="${firstSub}"]`);
+                    if (firstTab) firstTab.classList.add('active');
                 }, 0);
             }
         } else {
+            // Обычная категория без подгрупп
             category.items.forEach(item => {
                 const cartItem = cart.find(ci => ci.id === item.id);
                 itemsHTML += renderMenuItem(item, cartItem ? cartItem.quantity : 0);
@@ -228,10 +232,9 @@ function renderMenuSections() {
     setupDrinksTabHandlers();
 }
 
-function loadDrinksSubgroup(subgroupId) {
-    const grid = document.getElementById('drinksMenuGrid');
-    const category = menuData.drinks; // предполагаем, что slug = drinks
-    const subgroup = category?.subgroups?.[subgroupId];
+function loadSubgroupItems(category, subgroupId) {
+    const grid = document.getElementById('subgroupMenuGrid');
+    const subgroup = category.subgroups[subgroupId];
     if (!grid || !subgroup) return;
     
     let html = '';
@@ -246,7 +249,8 @@ function renderMenuItem(item, quantityInCart) {
     const showWeight = SHOW_WEIGHT && item.weight && item.weight.trim() !== '';
     const showVolume = item.volume && item.volume.trim() !== '';
     const showAlcohol = SHOW_ALCOHOL_CONTENT && item.alcohol_content;
-    const imagePath = item.image_path ? (item.image_path.startsWith('/') ? item.image_path : '/static/' + item.image_path) : '';
+    const imagePath = item.image_path ? 
+        (item.image_path.startsWith('/') ? item.image_path : '/static/' + item.image_path) : '';
     
     return `
     <div class="menu-card" data-id="${item.id}">
@@ -305,17 +309,23 @@ function setupDrinksTabHandlers() {
         if (tab) {
             e.preventDefault();
             const subgroupId = tab.dataset.subgroup;
-            if (subgroupId && subgroupId !== currentDrinksSubgroupId) {
-                loadDrinksSubgroup(subgroupId);
-                currentDrinksSubgroupId = subgroupId;
-                document.querySelectorAll('.drinks-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
+            if (subgroupId && subgroupId !== currentSubgroupId) {
+                // Найти родительскую категорию (активную секцию)
+                const activeSection = document.querySelector('.category-section.active');
+                const categoryId = activeSection.id.replace('category-', '');
+                const category = menuData[categoryId];
+                if (category) {
+                    loadSubgroupItems(category, subgroupId);
+                    currentSubgroupId = subgroupId;
+                    document.querySelectorAll('.drinks-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                }
             }
         }
     });
 }
 
-// ---------- Модальные окна и корзина (без изменений, но с findItemById) ----------
+// ---------- Модальные окна и корзина (без изменений) ----------
 function openImageModal(src) {
     const modal = document.getElementById('imageModal');
     document.getElementById('modalImage').src = src;
@@ -488,17 +498,17 @@ function setupTouchEvents() {
 function handleResize() {
     if (window.innerWidth <= 768) {
         initMobileQuickNav();
-        const tabs = document.getElementById('drinksTabs');
+        const tabs = document.querySelector('.drinks-tabs');
         if (tabs) { tabs.style.overflowX = 'auto'; tabs.style.paddingBottom = '10px'; }
     } else {
         document.getElementById('categoryQuickNav').innerHTML = '';
-        const tabs = document.getElementById('drinksTabs');
+        const tabs = document.querySelector('.drinks-tabs');
         if (tabs) tabs.style.overflowX = 'visible';
     }
 }
 window.addEventListener('resize', handleResize);
 
-// Привязка событий интерфейса (выполнится после загрузки DOM)
+// Привязка событий интерфейса
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cartIcon').addEventListener('click', openCart);
     document.getElementById('closeCart').addEventListener('click', closeCart);

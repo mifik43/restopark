@@ -14,8 +14,8 @@
             <tr>
                 <th>ID</th>
                 <th>Название</th>
-                <th>Slug</th>
-                <th>Родительская</th>
+                <th>Код (slug)</th>
+                <th>Родительская категория</th>
                 <th>Порядок</th>
                 <th>Действия</th>
             </tr>
@@ -29,10 +29,10 @@
                 <td>{{ cat.parent.name if cat.parent else '—' }}</td>
                 <td>{{ cat.order }}</td>
                 <td class="table-actions">
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editCategoryModal{{ cat.id }}">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editCategoryModal{{ cat.id }}" title="Редактировать">
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <a href="{{ url_for('admin_category_delete', id=cat.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Удалить категорию и все вложенные элементы?')">
+                    <a href="{{ url_for('admin_category_delete', id=cat.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Удалить категорию и все вложенные элементы?')" title="Удалить">
                         <i class="bi bi-trash"></i>
                     </a>
                 </td>
@@ -52,8 +52,9 @@
                                     <input type="text" name="name" value="{{ cat.name }}" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Slug</label>
+                                    <label class="form-label">Код (slug)</label>
                                     <input type="text" name="slug" value="{{ cat.slug }}" class="form-control" required>
+                                    <small class="text-muted">Латинские буквы, цифры и дефис</small>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Родительская категория</label>
@@ -72,7 +73,8 @@
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <button type="submit" class="btn btn-primary">Сохранить</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
                             </div>
                         </div>
                     </form>
@@ -101,8 +103,9 @@
                         <input type="text" name="name" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Slug (латиница, без пробелов)</label>
+                        <label class="form-label">Код (slug)</label>
                         <input type="text" name="slug" class="form-control" required>
+                        <small class="text-muted">Латинские буквы, цифры и дефис, например: hot-dishes</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Родительская категория</label>
@@ -122,7 +125,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Добавить</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Добавить категорию</button>
                 </div>
             </div>
         </form>
