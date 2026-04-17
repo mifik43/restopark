@@ -1,4 +1,5 @@
 {% extends "admin/base.html" %}
+{% block title %}Дашборд{% endblock %}
 {% block content %}
 <h2>Панель управления</h2>
 <div class="row mt-4">
@@ -7,7 +8,7 @@
             <div class="card-body">
                 <h5 class="card-title">Категории</h5>
                 <p class="card-text display-4">{{ categories_count }}</p>
-                <a href="#" class="btn btn-light">Управлять</a>
+                <a href="{{ url_for('admin_categories') }}" class="btn btn-light">Управлять</a>
             </div>
         </div>
     </div>
@@ -16,7 +17,7 @@
             <div class="card-body">
                 <h5 class="card-title">Блюда</h5>
                 <p class="card-text display-4">{{ items_count }}</p>
-                <a href="#" class="btn btn-light">Управлять</a>
+                <a href="{{ url_for('admin_items') }}" class="btn btn-light">Управлять</a>
             </div>
         </div>
     </div>
