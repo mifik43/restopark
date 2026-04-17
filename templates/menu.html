@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#1a1a1a">
+    <title>RESTOPARK Меню</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-content">
+            <div class="logo-area">
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="RESTOPARK Logo" loading="lazy">
+                </div>
+                <div class="restaurant-info">
+                    <!--<h1>RESTOPARK</h1>-->
+                    <!--<p>Самара • Амбар Вафли + Бар • Осень 2025</p>-->
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <div class="contact-info">
+                <p><i class="fas fa-map-marker-alt"></i> г. Самара Южное шоссе 5</p>
+                <p><i class="fas fa-clock"></i> Пн-Вс: 10:00 - 22:00</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="category-nav" id="categoryNav"></div>
+            <div class="nav-right">
+                <a href="/" class="back-home" title="На главную">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Назад</span>
+                </a>
+                <div class="cart-icon" id="cartIcon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count" id="cartCount">0</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Navigation (Dropdown) -->
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-content">
+            <button class="close-mobile-nav" id="closeMobileNav">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="mobile-categories" id="mobileCategories"></div>
+            <div class="mobile-contact-info">
+                <h3>Контакты</h3>
+                <p><i class="fas fa-map-marker-alt"></i> г. Самара</p>
+                <p><i class="fas fa-clock"></i> Пн-Вс: 10:00 - 23:00</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div class="category-quick-nav" id="categoryQuickNav"></div>
+        <div id="menuSections"></div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>RESTOPARK</h3>
+                    <p>Самара • Амбар</p>
+                </div>
+                <div>
+                    <p>В нашем парке есть игры на планшетах, а на втором этаже у нас есть PlayStation</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Важно знать</h3>
+                    <div class="allergy-notice">
+                        <p>Описание блюд в меню может не содержать детальной информации о входящих ингредиентах. При наличии у вас аллергии уточняйте информацию о подробном составе блюд у официантов.</p>
+                        <p>Подача блюд может отличаться от представленной на фотографиях.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2026 RESTOPARK. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Cart Modal -->
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-content">
+            <div class="cart-header">
+                <h2>Ваш заказ</h2>
+                <button class="close-cart" id="closeCart">&times;</button>
+            </div>
+            <div class="cart-items" id="cartItems"></div>
+            <div class="cart-total">
+                Итого: <span id="cartTotal">0</span> ₽
+            </div>
+            <div class="cart-actions"></div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div class="image-modal" id="imageModal">
+        <div class="image-modal-content">
+            <button class="close-image-modal" id="closeImageModal">&times;</button>
+            <img id="modalImage" src="" alt="Увеличенное изображение">
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script src="{{ url_for('static', filename='js/menu.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h2>Управление блюдами</h2>
+
+<!-- Кнопка добавления (открывает модальное окно) -->
+<button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addItemModal">+ Добавить блюдо</button>
+
+<!-- Модальное окно добавления -->
+<div class="modal fade" id="addItemModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <form method="POST" action="{{ url_for('admin_item_add') }}" enctype="multipart/form-data">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Добавить блюдо</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    {% include "admin/_item_form.html" %}
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Таблица блюд -->
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Изображение</th>
+            <th>Название</th>
+            <th>Категория</th>
+            <th>Цена</th>
+            <th>Вес/Объем</th>
+            <th>Доступно</th>
+            <th>Порядок</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+        <tr>
+            <td>{{ item.id }}</td>
+            <td>
+                {% if item.image_path %}
+                    <img src="{{ item.image_path }}" style="height: 40px;">
+                {% else %}
+                    <i class="fas {{ item.icon_class }}"></i>
+                {% endif %}
+            </td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.category.name if item.category else '—' }}</td>
+            <td>{{ item.price }} ₽</td>
+            <td>{{ item.weight or item.volume or '—' }}</td>
+            <td>{{ '✅' if item.is_available else '❌' }}</td>
+            <td>{{ item.order }}</td>
+            <td>
+                <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editItemModal{{ item.id }}">Изменить</button>
+                <a href="{{ url_for('admin_item_delete', id=item.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Удалить блюдо?')">Удалить</a>
+            </td>
+        </tr>
+        <!-- Модальное окно редактирования -->
+        <div class="modal fade" id="editItemModal{{ item.id }}" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <form method="POST" action="{{ url_for('admin_item_edit', id=item.id) }}" enctype="multipart/form-data">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Редактировать: {{ item.name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            {% with item=item %}
+                                {% include "admin/_item_form.html" %}
+                            {% endwith %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Сохранить</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

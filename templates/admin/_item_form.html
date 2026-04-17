@@ -1,0 +1,78 @@
+<div class="row">
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label>Название *</label>
+            <input type="text" name="name" value="{{ item.name if item else '' }}" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Категория *</label>
+            <select name="category_id" class="form-control" required>
+                <option value="">Выберите категорию</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if item and item.category_id == cat.id %}selected{% endif %}>
+                        {{ '—' * (cat.parent_id is not none) }} {{ cat.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label>Описание</label>
+            <textarea name="description" class="form-control" rows="3">{{ item.description if item else '' }}</textarea>
+        </div>
+        <div class="row">
+            <div class="col">
+                <label>Цена (₽) *</label>
+                <input type="number" name="price" value="{{ item.price if item else '' }}" class="form-control" required>
+            </div>
+            <div class="col">
+                <label>Вес (гр)</label>
+                <input type="text" name="weight" value="{{ item.weight if item else '' }}" class="form-control">
+            </div>
+            <div class="col">
+                <label>Объем (мл)</label>
+                <input type="text" name="volume" value="{{ item.volume if item else '' }}" class="form-control">
+            </div>
+        </div>
+        <div class="mb-3">
+            <label>Алкоголь (%)</label>
+            <input type="text" name="alcohol_content" value="{{ item.alcohol_content if item else '' }}" class="form-control">
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label>Изображение</label>
+            <input type="file" name="image" class="form-control" accept="image/*">
+            {% if item and item.image_path %}
+                <div class="mt-2">
+                    <img src="{{ item.image_path }}" style="max-height: 100px;">
+                    <p class="text-muted">Оставьте пустым, чтобы не менять</p>
+                </div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <label>Иконка (FontAwesome класс)</label>
+            <input type="text" name="icon_class" value="{{ item.icon_class if item else 'fa-utensils' }}" class="form-control">
+        </div>
+        <div class="row">
+            <div class="col">
+                <label>Порядок</label>
+                <input type="number" name="order" value="{{ item.order if item else 0 }}" class="form-control">
+            </div>
+            <div class="col">
+                <label>Доступно</label>
+                <div class="form-check mt-2">
+                    <input type="checkbox" name="is_available" class="form-check-input" {% if not item or item.is_available %}checked{% endif %}>
+                    <label class="form-check-label">Показывать в меню</label>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <h6>Пищевая ценность (опционально)</h6>
+        <div class="row">
+            <div class="col"><label>Ккал</label><input type="text" name="calories" value="{{ item.calories if item else '' }}" class="form-control"></div>
+            <div class="col"><label>Белки</label><input type="text" name="proteins" value="{{ item.proteins if item else '' }}" class="form-control"></div>
+            <div class="col"><label>Жиры</label><input type="text" name="fats" value="{{ item.fats if item else '' }}" class="form-control"></div>
+            <div class="col"><label>Углеводы</label><input type="text" name="carbs" value="{{ item.carbs if item else '' }}" class="form-control"></div>
+        </div>
+    </div>
+</div>

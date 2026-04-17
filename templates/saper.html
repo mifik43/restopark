@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Мухоловка Сапер | 3 жизни — 3 мухоловки</title>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1a472a 0%, #0e2a1a 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Courier New', monospace;
+            margin: 0;
+            padding: 12px;
+        }
+
+        .game-container {
+            background: #2d2b1f;
+            border-radius: 48px;
+            padding: 16px 18px 22px 18px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.5), inset 0 1px 4px rgba(255,255,200,0.2);
+            border: 1px solid #5e5b3c;
+            max-width: 100%;
+            width: fit-content;
+            margin: 0 auto;
+        }
+
+        /* Единая панель управления */
+        .game-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            border-radius: 60px;
+            padding: 8px 16px;
+            margin-bottom: 20px;
+            color: white;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .stats {
+            display: flex;
+            gap: 12px;
+        }
+        .score-box, .best-box {
+            background: #0b1215;
+            border-radius: 40px;
+            padding: 6px 14px;
+            text-align: center;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+            min-width: 80px;
+        }
+        .score-label, .best-label {
+            font-size: 11px;
+            letter-spacing: 1px;
+            font-weight: 600;
+            color: #ffd966;
+            text-transform: uppercase;
+        }
+        .score-value, .best-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #f5f9ff;
+            line-height: 1;
+            text-shadow: 0 2px 3px black;
+        }
+        .buttons-group {
+            display: flex;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        /* Единый стиль кнопок */
+        .btn, .back-btn {
+            background: radial-gradient(circle at 30% 10%, #ffb347, #ff7e05);
+            border: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            font-family: inherit;
+            padding: 8px 18px;
+            border-radius: 60px;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+            box-shadow: 0 6px 0 #a34000;
+            transition: 0.07s linear;
+            cursor: pointer;
+            touch-action: manipulation;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn:active, .back-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #a34000;
+        }
+        .restart-btn { background: radial-gradient(circle at 30% 10%, #6e906b, #42633b); box-shadow: 0 6px 0 #2b4a25; }
+        .exit-btn { background: radial-gradient(circle at 30% 10%, #4a5a3a, #2e3a22); box-shadow: 0 6px 0 #1f2a14; }
+
+        .status {
+            background: #1f2a18;
+            padding: 5px 16px;
+            border-radius: 32px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #d8d0a8;
+            font-family: monospace;
+            white-space: nowrap;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            background-color: #4c6e3c;
+            padding: 10px;
+            border-radius: 28px;
+            box-shadow: inset 0 0 0 2px #8aa86a, 0 10px 20px rgba(0,0,0,0.3);
+            justify-content: center;
+            gap: 2px;
+            background-color: #6a864a;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        .cell {
+            width: 44px;
+            height: 44px;
+            background: #b4c48c;
+            border: 1px solid #6a864a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: 0.05s linear;
+            box-shadow: inset 0 1px 3px rgba(255,255,200,0.7), inset 0 -1px 0 #6f8f4a;
+            font-family: monospace;
+            text-shadow: 0 1px 0 white;
+            touch-action: manipulation;
+        }
+
+        .cell:active { transform: scale(0.96); }
+        .cell.revealed {
+            background: #e8e2b6;
+            box-shadow: inset 0 0 0 1px #c9bb7a;
+            cursor: default;
+            transform: none;
+        }
+        .cell.revealed.poison-revealed {
+            background: #bc9a6f;
+            color: #fff0c0;
+            text-shadow: 0 1px 2px #442200;
+            box-shadow: inset 0 0 0 2px #7d5533;
+        }
+        .cell.flagged::before {
+            content: "⚑";
+            font-size: 1.6rem;
+            color: #cc2e2e;
+            text-shadow: 0 1px 1px black;
+        }
+        .cell.flytrap-reveal {
+            background: #5e3a2c;
+            color: #f3c26b;
+            font-size: 1.9rem;
+        }
+        .cell[data-value="1"] { color: #1e5790; }
+        .cell[data-value="2"] { color: #2c6e2c; }
+        .cell[data-value="3"] { color: #c23b22; }
+        .cell[data-value="4"] { color: #2b4570; }
+        .cell[data-value="5"] { color: #914e2c; }
+        .cell[data-value="6"] { color: #3b8c8c; }
+
+        @media (max-width: 680px) {
+            .cell { width: 38px; height: 38px; font-size: 1.1rem; }
+            .cell.flagged::before { font-size: 1.4rem; }
+            .cell.flytrap-reveal { font-size: 1.7rem; }
+            .btn { font-size: 1rem; padding: 4px 12px; }
+        }
+        @media (max-width: 550px) {
+            .cell { width: 32px; height: 32px; font-size: 1rem; }
+            .cell.flagged::before { font-size: 1.3rem; }
+            .cell.flytrap-reveal { font-size: 1.5rem; }
+        }
+        @media (max-width: 480px) {
+            .cell { width: 28px; height: 28px; font-size: 0.85rem; }
+            .cell.flagged::before { font-size: 1.2rem; }
+            .cell.flytrap-reveal { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <div class="game-panel">
+        <div class="stats">
+            <div class="score-box">
+                <div class="score-label">🪤 МУХОЛОВКИ</div>
+                <div class="score-value" id="flytrap-counter">0/0</div>
+            </div>
+            <div class="best-box">
+                <div class="best-label">❤️ ЖИЗНИ</div>
+                <div class="best-value" id="health-display">3</div>
+            </div>
+        </div>
+        <div class="buttons-group">
+            <select id="difficulty-select" class="btn" style="background:#4a3824; box-shadow:0 6px 0 #2b1e12; padding:8px 16px;">
+                <option value="easy">🌿 8x8</option>
+                <option value="medium" selected>🍂 12x12</option>
+                <option value="hard">🔥 16x16</option>
+            </select>
+            <button class="btn restart-btn" id="reset-game">🔄</button>
+            <a href="/games" class="btn exit-btn">🚪 ВЫХОД</a>
+        </div>
+    </div>
+    <div id="grid-container" class="grid"></div>
+    <div class="status" id="game-status">🌿 ИГРА</div>
+</div>
+
+<script>
+    // ========== НАСТРОЙКИ СЛОЖНОСТИ ==========
+    const DIFFICULTY = {
+        easy:   { rows: 8, cols: 8, percent: 10 },
+        medium: { rows: 12, cols: 12, percent: 15 },
+        hard:   { rows: 16, cols: 16, percent: 20 }
+    };
+    
+    let currentDifficulty = 'medium';
+    let ROWS = DIFFICULTY.medium.rows;
+    let COLS = DIFFICULTY.medium.cols;
+    let FLYTRAP_PERCENT = DIFFICULTY.medium.percent;
+    let TOTAL_FLYTRAPS = 0;
+    
+    const MAX_HEALTH = 3;
+    const POISON_RADIUS = 1;
+    
+    let board = [];
+    let gameActive = true;
+    let currentHealth = MAX_HEALTH;
+    let winFlag = false;
+    
+    const gridContainer = document.getElementById('grid-container');
+    const flytrapCounterSpan = document.getElementById('flytrap-counter');
+    const healthDisplaySpan = document.getElementById('health-display');
+    const gameStatusSpan = document.getElementById('game-status');
+    const resetBtn = document.getElementById('reset-game');
+    const difficultySelect = document.getElementById('difficulty-select');
+    
+    let touchTimer = null;
+    let currentTouchTarget = null;
+    
+    function updateFlytrapsCount() {
+        const flaggedCount = board.flat().filter(cell => cell.flagged).length;
+        flytrapCounterSpan.innerText = `${flaggedCount}/${TOTAL_FLYTRAPS}`;
+    }
+    
+    function updateUIStats() {
+        updateFlytrapsCount();
+        healthDisplaySpan.innerText = currentHealth;
+    }
+    
+    function countAdjacentFlytraps(row, col) {
+        let count = 0;
+        for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+                if (dr === 0 && dc === 0) continue;
+                const nr = row + dr, nc = col + dc;
+                if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && board[nr][nc].isFlytrap) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+    
+    function computePoisonStatus(row, col) {
+        if (board[row][col].isFlytrap) return false;
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (board[r][c].isFlytrap) {
+                    const dr = Math.abs(r - row);
+                    const dc = Math.abs(c - col);
+                    if (Math.max(dr, dc) <= POISON_RADIUS) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
+    function initBoard() {
+        let totalCells = ROWS * COLS;
+        TOTAL_FLYTRAPS = Math.max(1, Math.floor(totalCells * FLYTRAP_PERCENT / 100));
+        
+        board = Array(ROWS).fill().map(() => Array(COLS).fill().map(() => ({
+            isFlytrap: false,
+            adjacentMines: 0,
+            isPoisoned: false,
+            revealed: false,
+            flagged: false
+        })));
+        
+        let placed = 0;
+        while (placed < TOTAL_FLYTRAPS) {
+            const randRow = Math.floor(Math.random() * ROWS);
+            const randCol = Math.floor(Math.random() * COLS);
+            if (!board[randRow][randCol].isFlytrap) {
+                board[randRow][randCol].isFlytrap = true;
+                placed++;
+            }
+        }
+        
+        for (let i = 0; i < ROWS; i++) {
+            for (let j = 0; j < COLS; j++) {
+                if (!board[i][j].isFlytrap) {
+                    board[i][j].adjacentMines = countAdjacentFlytraps(i, j);
+                }
+            }
+        }
+        
+        for (let i = 0; i < ROWS; i++) {
+            for (let j = 0; j < COLS; j++) {
+                if (!board[i][j].isFlytrap) {
+                    board[i][j].isPoisoned = computePoisonStatus(i, j);
+                }
+            }
+        }
+    }
+    
+    function renderGrid() {
+        gridContainer.style.gridTemplateColumns = `repeat(${COLS}, minmax(0, 1fr))`;
+        gridContainer.innerHTML = '';
+        for (let i = 0; i < ROWS; i++) {
+            for (let j = 0; j < COLS; j++) {
+                const cell = board[i][j];
+                const cellDiv = document.createElement('div');
+                cellDiv.className = 'cell';
+                if (cell.revealed) {
+                    cellDiv.classList.add('revealed');
+                    if (cell.isFlytrap) {
+                        cellDiv.classList.add('flytrap-reveal');
+                        cellDiv.innerText = '🪤';
+                    } else {
+                        if (cell.isPoisoned) {
+                            cellDiv.classList.add('poison-revealed');
+                            cellDiv.innerText = cell.adjacentMines > 0 ? cell.adjacentMines : '💀';
+                            if (cell.adjacentMines === 0) cellDiv.innerText = '☠️';
+                        } else {
+                            if (cell.adjacentMines > 0) {
+                                cellDiv.innerText = cell.adjacentMines;
+                                cellDiv.setAttribute('data-value', cell.adjacentMines);
+                            } else {
+                                cellDiv.innerText = '';
+                            }
+                        }
+                    }
+                } else {
+                    if (cell.flagged) {
+                        cellDiv.classList.add('flagged');
+                        cellDiv.innerText = '';
+                    } else {
+                        cellDiv.innerText = '';
+                    }
+                }
+                
+                cellDiv.addEventListener('click', (function(r,c) {
+                    return function(e) {
+                        e.preventDefault?.();
+                        if (!gameActive || winFlag) return;
+                        if (board[r][c].flagged) return;
+                        revealCell(r,c);
+                    };
+                })(i,j));
+                
+                cellDiv.addEventListener('contextmenu', (function(r,c) {
+                    return function(e) {
+                        e.preventDefault();
+                        if (!gameActive || winFlag) return;
+                        if (board[r][c].revealed) return;
+                        toggleFlag(r,c);
+                        return false;
+                    };
+                })(i,j));
+                
+                cellDiv.addEventListener('touchstart', (function(r,c) {
+                    return function(e) {
+                        e.preventDefault();
+                        if (!gameActive || winFlag) return;
+                        if (board[r][c].revealed) return;
+                        currentTouchTarget = { row: r, col: c, element: cellDiv };
+                        touchTimer = setTimeout(() => {
+                            if (currentTouchTarget && gameActive && !winFlag && !board[currentTouchTarget.row][currentTouchTarget.col].revealed) {
+                                toggleFlag(currentTouchTarget.row, currentTouchTarget.col);
+                            }
+                            touchTimer = null;
+                            currentTouchTarget = null;
+                        }, 350);
+                    };
+                })(i,j));
+                
+                cellDiv.addEventListener('touchend', (function(r,c) {
+                    return function(e) {
+                        e.preventDefault();
+                        if (touchTimer) {
+                            clearTimeout(touchTimer);
+                            touchTimer = null;
+                            if (currentTouchTarget && gameActive && !winFlag && !board[r][c].revealed && !board[r][c].flagged) {
+                                revealCell(r,c);
+                            }
+                            currentTouchTarget = null;
+                        }
+                    };
+                })(i,j));
+                
+                cellDiv.addEventListener('touchcancel', () => {
+                    if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
+                    currentTouchTarget = null;
+                });
+                
+                gridContainer.appendChild(cellDiv);
+            }
+        }
+        updateUIStats();
+    }
+    
+    function allNonFlytrapRevealed() {
+        for (let i = 0; i < ROWS; i++) {
+            for (let j = 0; j < COLS; j++) {
+                if (!board[i][j].isFlytrap && !board[i][j].revealed) return false;
+            }
+        }
+        return true;
+    }
+    
+    function checkWin() {
+        if (allNonFlytrapRevealed() && gameActive && !winFlag) {
+            winFlag = true;
+            gameActive = false;
+            gameStatusSpan.innerText = '🏆 ПОБЕДА! 🏆';
+            gameStatusSpan.style.color = '#f7e05e';
+            revealAllForWinLose(false);
+            renderGrid();
+            return true;
+        }
+        return false;
+    }
+    
+    function gameLose(reason = 'flytrap') {
+        if (!gameActive) return;
+        gameActive = false;
+        gameStatusSpan.innerText = '💀 ТРИ МУХОЛОВКИ СЪЕЛИ ВАС! 💀';
+        gameStatusSpan.style.color = '#ff8866';
+        revealAllForWinLose(true);
+        renderGrid();
+    }
+    
+    function revealAllForWinLose(showAll = true) {
+        for (let i = 0; i < ROWS; i++) {
+            for (let j = 0; j < COLS; j++) {
+                const cell = board[i][j];
+                if (!cell.revealed && showAll) {
+                    if (cell.isFlytrap) cell.revealed = true;
+                    else if (cell.isPoisoned && !cell.isFlytrap) cell.revealed = true;
+                    else if (!cell.isFlytrap && !cell.isPoisoned && !cell.revealed) {
+                        cell.revealed = true;
+                    }
+                }
+            }
+        }
+    }
+    
+    function revealSafeNeighbors(row, col) {
+        for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+                if (dr === 0 && dc === 0) continue;
+                const nr = row + dr, nc = col + dc;
+                if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+                    const neighbor = board[nr][nc];
+                    if (!neighbor.revealed && !neighbor.flagged && !neighbor.isFlytrap && !neighbor.isPoisoned) {
+                        revealCell(nr, nc, true);
+                    }
+                }
+            }
+        }
+    }
+    
+    function revealCell(row, col, fromAuto = false) {
+        const cell = board[row][col];
+        if (!gameActive || winFlag) return;
+        if (cell.revealed) return;
+        if (cell.flagged) return;
+        
+        if (cell.isFlytrap) {
+            currentHealth--;
+            updateUIStats();
+            cell.revealed = true;
+            renderGrid();
+            if (currentHealth <= 0) {
+                gameLose('flytrap');
+            } else {
+                checkWin();
+            }
+            return;
+        }
+        
+        cell.revealed = true;
+        renderGrid();
+        
+        if (cell.adjacentMines === 0 && !cell.isPoisoned) {
+            revealSafeNeighbors(row, col);
+        }
+        
+        checkWin();
+    }
+    
+    function toggleFlag(row, col) {
+        const cell = board[row][col];
+        if (cell.revealed) return;
+        if (!gameActive || winFlag) return;
+        
+        if (!cell.flagged) {
+            cell.flagged = true;
+        } else {
+            cell.flagged = false;
+        }
+        renderGrid();
+        checkWin();
+    }
+    
+    function applyDifficulty() {
+        const diff = DIFFICULTY[currentDifficulty];
+        ROWS = diff.rows;
+        COLS = diff.cols;
+        FLYTRAP_PERCENT = diff.percent;
+    }
+    
+    function resetAndNewGame() {
+        applyDifficulty();
+        gameActive = true;
+        winFlag = false;
+        currentHealth = MAX_HEALTH;
+        initBoard();
+        renderGrid();
+        gameStatusSpan.innerText = '🌿 ИГРА';
+        gameStatusSpan.style.color = '#d8d0a8';
+        updateUIStats();
+    }
+    
+    difficultySelect.addEventListener('change', () => {
+        currentDifficulty = difficultySelect.value;
+        resetAndNewGame();
+    });
+    resetBtn.addEventListener('click', resetAndNewGame);
+    
+    applyDifficulty();
+    initBoard();
+    gameActive = true;
+    winFlag = false;
+    currentHealth = MAX_HEALTH;
+    renderGrid();
+    updateUIStats();
+</script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мультфильмы</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1.8rem;
+            margin-bottom: 40px;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 20px 40px;
+            background: white;
+            color: #1e3c72;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 50px;
+            transition: background 0.3s, transform 0.3s;
+        }
+        .back-btn:hover {
+            background: #f0f0f0;
+            transform: scale(1.05);
+        }
+        @media (max-width: 600px) {
+            h1 { font-size: 2.5rem; }
+            p { font-size: 1.2rem; }
+            .back-btn { font-size: 1.2rem; padding: 15px 30px; }
+        }
+    </style>
+</head>
+<body>
+    <h1>📺 Мультфильмы</h1>
+    <p>Раздел временно не работает.<br>Скоро здесь появятся мультфильмы!</p>
+    <a href="/" class="back-btn">← На главную</a>
+</body>
+</html>

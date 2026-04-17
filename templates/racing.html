@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Street Rush - гонки на тачскрине</title>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: pan-y pinch-zoom;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(145deg, #0a1f1e 0%, #071515 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Roboto', sans-serif;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            width: 100%;
+            max-width: 480px;
+        }
+
+        canvas {
+            width: 100%;
+            height: auto;
+            background: #1c2a2a;
+            border-radius: 36px;
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            touch-action: none;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Единая панель управления */
+        .game-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(8px);
+            border-radius: 60px;
+            padding: 8px 16px;
+            box-sizing: border-box;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .score-box, .best-box {
+            background: #0b1215;
+            border-radius: 40px;
+            padding: 6px 14px;
+            text-align: center;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.2);
+            flex: 1;
+            min-width: 80px;
+        }
+        .score-label, .best-label {
+            font-size: 11px;
+            letter-spacing: 1px;
+            font-weight: 600;
+            color: #ffd966;
+            text-transform: uppercase;
+        }
+        .score-value, .best-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #f5f9ff;
+            line-height: 1;
+            text-shadow: 0 2px 3px black;
+        }
+        .buttons-group {
+            display: flex;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        /* Единый стиль кнопок */
+        .btn, .back-btn {
+            background: radial-gradient(circle at 30% 10%, #ffb347, #ff7e05);
+            border: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            font-family: inherit;
+            padding: 8px 18px;
+            border-radius: 60px;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+            box-shadow: 0 6px 0 #a34000;
+            transition: 0.07s linear;
+            cursor: pointer;
+            touch-action: manipulation;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn:active, .back-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #a34000;
+        }
+        .restart-btn { background: radial-gradient(circle at 30% 10%, #6e906b, #42633b); box-shadow: 0 6px 0 #2b4a25; }
+        .exit-btn { background: radial-gradient(circle at 30% 10%, #4a5a3a, #2e3a22); box-shadow: 0 6px 0 #1f2a14; }
+
+        .controls-hint {
+            font-size: 13px;
+            background: rgba(0,0,0,0.5);
+            padding: 6px 14px;
+            border-radius: 40px;
+            color: #bbb;
+            text-align: center;
+            backdrop-filter: blur(4px);
+            width: fit-content;
+            margin-top: 4px;
+        }
+        .controls-hint i {
+            font-style: normal;
+            display: inline-block;
+            background: #2c3535;
+            padding: 4px 12px;
+            border-radius: 30px;
+            margin: 0 4px;
+        }
+
+        @media (max-width: 550px) {
+            .score-value, .best-value { font-size: 20px; }
+            .btn { font-size: 0.9rem; padding: 6px 14px; }
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+    <div class="game-panel">
+        <div class="score-box">
+            <div class="score-label">🏁 ОЧКИ</div>
+            <div class="score-value" id="scoreDisplay">0</div>
+        </div>
+        <div class="best-box">
+            <div class="best-label">🏆 РЕКОРД</div>
+            <div class="best-value" id="bestDisplay">0</div>
+        </div>
+        <div class="buttons-group">
+            <button class="btn restart-btn" id="restartButton">🔄</button>
+            <a href="/games" class="btn exit-btn">🚪 ВЫХОД</a>
+        </div>
+    </div>
+    <div class="controls-hint">
+        🖐️ <i>Веди пальцем / мышкой</i> — машина следует за движением
+    </div>
+</div>
+
+<script>
+    (function(){
+        // -------- CANVAS ----------
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const CANVAS_W = 400;
+        const CANVAS_H = 600;
+        canvas.width = CANVAS_W;
+        canvas.height = CANVAS_H;
+
+        const CAR_W = CANVAS_W * 0.1;
+        const CAR_H = CAR_W * 1.2;
+        
+        const MIN_X = CAR_W / 2;
+        const MAX_X = CANVAS_W - CAR_W / 2;
+        const PLAYER_Y = CANVAS_H - CAR_H - 12;
+        
+        let playerX = CANVAS_W / 2;
+        let enemies = [];
+        let playing = true;
+        let score = 0;
+        let highScore = 0;
+        let currentSpeed = 3.2;
+        let spawnDelay = 42;
+        let spawnCounter = 12;
+        let isDragging = false;
+        
+        function loadHighScore() {
+            try {
+                const saved = localStorage.getItem('racingHighScore');
+                if(saved && !isNaN(parseInt(saved))) {
+                    highScore = parseInt(saved);
+                } else {
+                    highScore = 0;
+                }
+            } catch(e) { highScore = 0; }
+            document.getElementById('bestDisplay').innerText = highScore;
+        }
+        
+        function saveHighScore() {
+            try { localStorage.setItem('racingHighScore', highScore); } catch(e) {}
+            document.getElementById('bestDisplay').innerText = highScore;
+        }
+        
+        loadHighScore();
+        
+        function updateUI() {
+            document.getElementById('scoreDisplay').innerText = Math.floor(score);
+            document.getElementById('bestDisplay').innerText = highScore;
+        }
+        
+        function updateDifficulty() {
+            let rawScore = Math.floor(score);
+            let newSpeed = 3.2 + (rawScore / 650);
+            if(newSpeed > 7.8) newSpeed = 7.8;
+            currentSpeed = newSpeed;
+            let newSpawnDelay = 44 - Math.floor(rawScore / 210);
+            if(newSpawnDelay < 20) newSpawnDelay = 20;
+            spawnDelay = newSpawnDelay;
+        }
+        
+        function spawnEnemy() {
+            const randX = MIN_X + Math.random() * (MAX_X - MIN_X);
+            enemies.push({
+                x: randX,
+                y: -CAR_H - Math.random() * 60,
+                w: CAR_W,
+                h: CAR_H,
+                color: `hsl(${Math.floor(Math.random() * 30 + 200)}, 70%, 55%)`
+            });
+        }
+        
+        function resetGameState() {
+            playing = true;
+            score = 0;
+            currentSpeed = 3.2;
+            spawnDelay = 42;
+            spawnCounter = 10;
+            enemies = [];
+            playerX = CANVAS_W / 2;
+            isDragging = false;
+            updateUI();
+            updateDifficulty();
+        }
+        
+        function resetGameWithHighScoreReset() {
+            playing = true;
+            score = 0;
+            currentSpeed = 3.2;
+            spawnDelay = 42;
+            spawnCounter = 10;
+            enemies = [];
+            playerX = CANVAS_W / 2;
+            isDragging = false;
+            highScore = 0;
+            saveHighScore();
+            updateUI();
+            updateDifficulty();
+        }
+        
+        function checkCollision(playerRect, enemyRect) {
+            return (playerRect.x < enemyRect.x + enemyRect.w &&
+                    playerRect.x + playerRect.w > enemyRect.x &&
+                    playerRect.y < enemyRect.y + enemyRect.h &&
+                    playerRect.y + playerRect.h > enemyRect.y);
+        }
+        
+        function updateGame() {
+            if(!playing) return;
+            score += 0.18;
+            updateUI();
+            updateDifficulty();
+            
+            if(spawnCounter <= 0) {
+                spawnEnemy();
+                if(currentSpeed > 6.2 && Math.random() < 0.25 && playing) spawnEnemy();
+                spawnCounter = Math.floor(spawnDelay);
+            } else {
+                spawnCounter--;
+            }
+            
+            for(let i=0; i<enemies.length; i++) {
+                enemies[i].y += currentSpeed;
+            }
+            enemies = enemies.filter(e => e.y < CANVAS_H + 100);
+            
+            const playerRect = {
+                x: playerX - CAR_W/2,
+                y: PLAYER_Y,
+                w: CAR_W,
+                h: CAR_H
+            };
+            
+            for(let i=0; i<enemies.length; i++) {
+                const e = enemies[i];
+                const enemyRect = { x: e.x - CAR_W/2, y: e.y, w: CAR_W, h: CAR_H };
+                if(checkCollision(playerRect, enemyRect)) {
+                    playing = false;
+                    const intScore = Math.floor(score);
+                    if(intScore > highScore) {
+                        highScore = intScore;
+                        saveHighScore();
+                        updateUI();
+                    }
+                    break;
+                }
+            }
+            if(!playing) updateUI();
+        }
+        
+        function drawRoad() {
+            const grad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+            grad.addColorStop(0, '#202d2d');
+            grad.addColorStop(1, '#0f1a1a');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#ddcfa0';
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.moveTo(25, 0); ctx.lineTo(25, CANVAS_H);
+            ctx.moveTo(CANVAS_W-25, 0); ctx.lineTo(CANVAS_W-25, CANVAS_H);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(18, 0); ctx.lineTo(18, CANVAS_H);
+            ctx.moveTo(CANVAS_W-18, 0); ctx.lineTo(CANVAS_W-18, CANVAS_H);
+            ctx.strokeStyle = '#7e7a5c';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            const lineOffset = (performance.now() * 0.008) % 30;
+            ctx.beginPath();
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = '#ffcd7e';
+            ctx.setLineDash([25, 30]);
+            for(let y = -20 + lineOffset; y < CANVAS_H + 30; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(CANVAS_W/2, y);
+                ctx.lineTo(CANVAS_W/2, y+30);
+                ctx.stroke();
+            }
+            ctx.setLineDash([]);
+            ctx.fillStyle = 'rgba(255,240,180,0.08)';
+            for(let i=0;i<8;i++) {
+                ctx.beginPath();
+                ctx.rect((CANVAS_W/2)-45 + Math.sin(Date.now()*0.003 + i)*12, (i*80 + Date.now()*0.5)%CANVAS_H, 25, 12);
+                ctx.fill();
+            }
+        }
+        
+        function drawCar(x, y, w, h, color, isPlayer = false) {
+            const centerX = x;
+            const topY = y;
+            const bodyW = w;
+            const bodyH = h;
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.roundRect(centerX - bodyW/2, topY, bodyW, bodyH, 8);
+            ctx.fill();
+            ctx.fillStyle = isPlayer ? '#a5e0ff' : '#2c3e4e';
+            ctx.beginPath();
+            ctx.roundRect(centerX - bodyW/2 + 4, topY + 5, bodyW-8, bodyH*0.35, 4);
+            ctx.fill();
+            ctx.fillStyle = isPlayer ? '#ffd966' : '#ffaa55';
+            ctx.beginPath();
+            ctx.arc(centerX - bodyW/3, topY + 3, 4, 0, Math.PI*2);
+            ctx.arc(centerX + bodyW/3, topY + 3, 4, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(centerX - bodyW/3, topY + 2, 2, 0, Math.PI*2);
+            ctx.arc(centerX + bodyW/3, topY + 2, 2, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = '#111';
+            ctx.shadowBlur = 4;
+            ctx.fillRect(centerX - bodyW/2 - 3, topY + 6, 5, 12);
+            ctx.fillRect(centerX + bodyW/2 - 2, topY + 6, 5, 12);
+            ctx.fillRect(centerX - bodyW/2 - 3, topY + bodyH-18, 5, 12);
+            ctx.fillRect(centerX + bodyW/2 - 2, topY + bodyH-18, 5, 12);
+            ctx.shadowBlur = 0;
+        }
+        
+        function drawEnemies() {
+            for(let e of enemies) drawCar(e.x, e.y, CAR_W, CAR_H, e.color, false);
+        }
+        
+        function drawPlayer() {
+            drawCar(playerX, PLAYER_Y, CAR_W, CAR_H, '#e34234', true);
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = '#ff884d';
+            drawCar(playerX, PLAYER_Y, CAR_W, CAR_H, '#e34234', true);
+            ctx.shadowBlur = 0;
+        }
+        
+        function drawGameOverlay() {
+            if(!playing) {
+                ctx.fillStyle = 'rgba(0,0,0,0.78)';
+                ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+                ctx.font = 'bold 28px "Segoe UI", system-ui';
+                ctx.fillStyle = '#ffcf4a';
+                ctx.shadowBlur = 0;
+                ctx.textAlign = 'center';
+                ctx.fillText('CRASH!', CANVAS_W/2, CANVAS_H/2 - 40);
+                ctx.font = '18px system-ui';
+                ctx.fillStyle = '#e2e2e2';
+                ctx.fillText('нажмите "НОВАЯ"', CANVAS_W/2, CANVAS_H/2 + 30);
+                ctx.font = '14px monospace';
+                ctx.fillStyle = '#bbaaff';
+                ctx.fillText('ваш результат: '+Math.floor(score), CANVAS_W/2, CANVAS_H/2 + 80);
+                ctx.textAlign = 'left';
+            }
+        }
+        
+        function drawHUD() {
+            ctx.font = 'bold 14px "Segoe UI"';
+            ctx.fillStyle = '#fff3cf';
+            ctx.shadowBlur = 3;
+            ctx.fillText(`⚡ ${currentSpeed.toFixed(1)}`, 15, 45);
+        }
+        
+        function render() {
+            drawRoad();
+            drawEnemies();
+            drawPlayer();
+            drawHUD();
+            drawGameOverlay();
+        }
+        
+        function getCanvasCoords(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let canvasX = (clientX - rect.left) * scaleX;
+            let canvasY = (clientY - rect.top) * scaleY;
+            canvasX = Math.min(Math.max(canvasX, 0), CANVAS_W);
+            canvasY = Math.min(Math.max(canvasY, 0), CANVAS_H);
+            return { canvasX, canvasY };
+        }
+        
+        function handlePointerMove(clientX, clientY) {
+            if(!playing) return;
+            if(!isDragging) return;
+            const { canvasX } = getCanvasCoords(clientX, clientY);
+            let newX = canvasX;
+            newX = Math.min(MAX_X, Math.max(MIN_X, newX));
+            playerX = newX;
+        }
+        
+        function onPointerStart(e) {
+            e.preventDefault();
+            if(!playing) return;
+            isDragging = true;
+            const clientX = e.clientX ?? (e.touches ? e.touches[0].clientX : null);
+            const clientY = e.clientY ?? (e.touches ? e.touches[0].clientY : null);
+            if(clientX !== null && clientY !== null) {
+                const { canvasX } = getCanvasCoords(clientX, clientY);
+                let newX = Math.min(MAX_X, Math.max(MIN_X, canvasX));
+                playerX = newX;
+            }
+        }
+        
+        function onPointerMove(e) {
+            e.preventDefault();
+            if(!isDragging) return;
+            let clientX, clientY;
+            if(e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            if(clientX !== undefined) handlePointerMove(clientX, clientY);
+        }
+        
+        function onPointerEnd(e) {
+            e.preventDefault();
+            isDragging = false;
+        }
+        
+        function attachControls() {
+            canvas.addEventListener('touchstart', onPointerStart, { passive: false });
+            canvas.addEventListener('touchmove', onPointerMove, { passive: false });
+            canvas.addEventListener('touchend', onPointerEnd);
+            canvas.addEventListener('touchcancel', onPointerEnd);
+            canvas.addEventListener('mousedown', onPointerStart);
+            window.addEventListener('mousemove', (e) => {
+                if(isDragging && playing) {
+                    e.preventDefault();
+                    handlePointerMove(e.clientX, e.clientY);
+                }
+            });
+            window.addEventListener('mouseup', onPointerEnd);
+            canvas.addEventListener('dragstart', (e) => e.preventDefault());
+        }
+        
+        function gameLoop() {
+            updateGame();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        const restartBtn = document.getElementById('restartButton');
+        function restartGameWithReset() {
+            resetGameWithHighScoreReset();
+        }
+        restartBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            restartGameWithReset();
+        });
+        
+        window.addEventListener('load', () => {
+            loadHighScore();
+            resetGameState();
+            attachControls();
+            gameLoop();
+        });
+        
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                if (w < 2 * r) r = w / 2;
+                if (h < 2 * r) r = h / 2;
+                this.moveTo(x+r, y);
+                this.lineTo(x+w-r, y);
+                this.quadraticCurveTo(x+w, y, x+w, y+r);
+                this.lineTo(x+w, y+h-r);
+                this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+                this.lineTo(x+r, y+h);
+                this.quadraticCurveTo(x, y+h, x, y+h-r);
+                this.lineTo(x, y+r);
+                this.quadraticCurveTo(x, y, x+r, y);
+                return this;
+            };
+        }
+        updateUI();
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,512 @@
+// static/js/menu.js — полная версия с API
+const SHOW_NUTRITION = false;
+const SHOW_WEIGHT = false;
+const USE_DISH_IMAGES = true;
+const SHOW_ALCOHOL_CONTENT = true;
+
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+let menuData = {};
+let currentDrinksSubgroupId = null;
+
+// ---------- Загрузка данных с сервера ----------
+async function loadMenuData() {
+    try {
+        const response = await fetch('/api/categories');
+        const categories = await response.json();
+
+        // Построение структуры menuData из плоского списка
+        menuData = {};
+        const categoryMap = {};
+
+        // Сначала сохраняем все категории в map
+        categories.forEach(cat => {
+            categoryMap[cat.id] = {
+                ...cat,
+                items: cat.items || [],
+                subgroups: {}
+            };
+        });
+
+        // Распределяем подкатегории по родителям
+        categories.forEach(cat => {
+            if (cat.parent_id) {
+                const parent = categoryMap[cat.parent_id];
+                if (parent) {
+                    if (!parent.subgroups) parent.subgroups = {};
+                    parent.subgroups[cat.slug] = {
+                        title: cat.name,
+                        icon: cat.icon_class || 'fa-glass-whiskey',
+                        items: cat.items || []
+                    };
+                    // Удаляем подкатегорию из корневого списка
+                    delete categoryMap[cat.id];
+                }
+            }
+        });
+
+        // Оставшиеся категории — корневые
+        Object.values(categoryMap).forEach(cat => {
+            menuData[cat.slug] = {
+                title: cat.name,
+                items: cat.items || []
+            };
+            if (cat.subgroups && Object.keys(cat.subgroups).length > 0) {
+                menuData[cat.slug].subgroups = cat.subgroups;
+                menuData[cat.slug].type = 'dropdown';
+            }
+        });
+
+        initNavigation();
+        renderMenuSections();
+        updateCartCount();
+        setupTouchEvents();
+
+        const firstCategory = Object.keys(menuData)[0];
+        if (firstCategory) showCategory(firstCategory);
+    } catch (error) {
+        console.error('Ошибка загрузки меню:', error);
+    }
+}
+
+// Поиск блюда по ID во всей структуре
+function findItemById(itemId) {
+    for (const catSlug in menuData) {
+        const cat = menuData[catSlug];
+        if (cat.subgroups) {
+            for (const subSlug in cat.subgroups) {
+                const found = cat.subgroups[subSlug].items.find(i => i.id === itemId);
+                if (found) return found;
+            }
+        } else {
+            const found = cat.items.find(i => i.id === itemId);
+            if (found) return found;
+        }
+    }
+    return null;
+}
+
+// ---------- Инициализация страницы ----------
+document.addEventListener('DOMContentLoaded', loadMenuData);
+
+// ---------- Навигация и отрисовка ----------
+function initNavigation() {
+    const categoryNav = document.getElementById('categoryNav');
+    const mobileCategories = document.getElementById('mobileCategories');
+    categoryNav.innerHTML = '';
+    mobileCategories.innerHTML = '';
+
+    Object.keys(menuData).forEach((categoryId, index) => {
+        const category = menuData[categoryId];
+        
+        // Десктоп
+        const desktopLink = document.createElement('a');
+        desktopLink.href = '#';
+        desktopLink.dataset.category = categoryId;
+        desktopLink.textContent = category.title;
+        if (index === 0) desktopLink.classList.add('active');
+        desktopLink.addEventListener('click', e => {
+            e.preventDefault();
+            showCategory(categoryId);
+            updateActiveNav(categoryId);
+        });
+        categoryNav.appendChild(desktopLink);
+
+        // Мобильная
+        const mobileLink = document.createElement('a');
+        mobileLink.href = '#';
+        mobileLink.dataset.category = categoryId;
+        mobileLink.textContent = category.title;
+        if (index === 0) mobileLink.classList.add('active');
+        mobileLink.addEventListener('click', e => {
+            e.preventDefault();
+            showCategory(categoryId);
+            updateActiveNav(categoryId);
+            closeMobileNav();
+        });
+        mobileCategories.appendChild(mobileLink);
+    });
+
+    if (window.innerWidth <= 768) initMobileQuickNav();
+}
+
+function initMobileQuickNav() {
+    const quickNav = document.getElementById('categoryQuickNav');
+    quickNav.innerHTML = '';
+    Object.keys(menuData).forEach((categoryId, index) => {
+        const category = menuData[categoryId];
+        const link = document.createElement('a');
+        link.href = '#';
+        link.dataset.category = categoryId;
+        link.textContent = category.title;
+        if (index === 0) link.classList.add('active');
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            showCategory(categoryId);
+            updateActiveNav(categoryId);
+            const element = document.getElementById(`category-${categoryId}`);
+            if (element) {
+                const offset = 150;
+                const elementPosition = element.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - offset;
+                window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+            }
+        });
+        quickNav.appendChild(link);
+    });
+}
+
+function updateActiveNav(categoryId) {
+    document.querySelectorAll('.category-nav a, .mobile-categories a, .category-quick-nav a').forEach(a => {
+        a.classList.toggle('active', a.dataset.category === categoryId);
+    });
+}
+
+function showCategory(categoryId) {
+    document.querySelectorAll('.category-section').forEach(s => s.classList.remove('active'));
+    const section = document.getElementById(`category-${categoryId}`);
+    if (section) {
+        section.classList.add('active');
+        if (window.innerWidth <= 768) {
+            setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+        }
+    }
+}
+
+// ---------- Рендер меню ----------
+function renderMenuSections() {
+    const menuSections = document.getElementById('menuSections');
+    menuSections.innerHTML = '';
+
+    Object.keys(menuData).forEach(categoryId => {
+        const category = menuData[categoryId];
+        const section = document.createElement('section');
+        section.id = `category-${categoryId}`;
+        section.className = 'category-section';
+
+        let itemsHTML = '';
+        
+        if (category.subgroups && category.type === 'dropdown') {
+            let tabsHTML = '<div class="drinks-tabs-container"><div class="drinks-tabs" id="drinksTabs">';
+            Object.keys(category.subgroups).forEach(subgroupId => {
+                const subgroup = category.subgroups[subgroupId];
+                const icon = subgroup.icon || 'fa-glass-whiskey';
+                tabsHTML += `<div class="drinks-tab" data-subgroup="${subgroupId}"><i class="fas ${icon}"></i>${subgroup.title}</div>`;
+            });
+            tabsHTML += '</div><div class="drinks-content"><div class="menu-grid" id="drinksMenuGrid"></div></div></div>';
+            
+            let totalItems = 0;
+            Object.values(category.subgroups).forEach(sub => totalItems += sub.items.length);
+            section.innerHTML = `
+                <div class="category-title"><h2>${category.title}</h2><span>${totalItems} позиций</span></div>
+                ${tabsHTML}
+            `;
+            
+            const firstSub = Object.keys(category.subgroups)[0];
+            if (firstSub) {
+                setTimeout(() => {
+                    loadDrinksSubgroup(firstSub);
+                    currentDrinksSubgroupId = firstSub;
+                    document.querySelector(`.drinks-tab[data-subgroup="${firstSub}"]`).classList.add('active');
+                }, 0);
+            }
+        } else {
+            category.items.forEach(item => {
+                const cartItem = cart.find(ci => ci.id === item.id);
+                itemsHTML += renderMenuItem(item, cartItem ? cartItem.quantity : 0);
+            });
+            section.innerHTML = `
+                <div class="category-title"><h2>${category.title}</h2><span>${category.items.length} позиций</span></div>
+                <div class="menu-grid">${itemsHTML}</div>
+            `;
+        }
+
+        menuSections.appendChild(section);
+    });
+
+    setupImageClickHandlers();
+    setupAddToCartHandlers();
+    setupDrinksTabHandlers();
+}
+
+function loadDrinksSubgroup(subgroupId) {
+    const grid = document.getElementById('drinksMenuGrid');
+    const category = menuData.drinks; // предполагаем, что slug = drinks
+    const subgroup = category?.subgroups?.[subgroupId];
+    if (!grid || !subgroup) return;
+    
+    let html = '';
+    subgroup.items.forEach(item => {
+        const cartItem = cart.find(ci => ci.id === item.id);
+        html += renderMenuItem(item, cartItem ? cartItem.quantity : 0);
+    });
+    grid.innerHTML = html;
+}
+
+function renderMenuItem(item, quantityInCart) {
+    const showWeight = SHOW_WEIGHT && item.weight && item.weight.trim() !== '';
+    const showVolume = item.volume && item.volume.trim() !== '';
+    const showAlcohol = SHOW_ALCOHOL_CONTENT && item.alcohol_content;
+    const imagePath = item.image_path ? (item.image_path.startsWith('/') ? item.image_path : '/static/' + item.image_path) : '';
+    
+    return `
+    <div class="menu-card" data-id="${item.id}">
+        <div class="card-image">
+            <i class="fas ${item.icon_class || 'fa-utensils'} dish-icon"></i>
+            ${USE_DISH_IMAGES && imagePath ? `
+            <img class="dish-image" src="${imagePath}" alt="${item.name}" loading="lazy"
+                 onload="this.classList.add('loaded'); this.parentElement.querySelector('.dish-icon').style.display='none';"
+                 onerror="this.style.display='none'; this.parentElement.querySelector('.dish-icon').style.display='block';">` : ''}
+        </div>
+        <div class="card-content">
+            <div class="card-header">
+                <h3 class="card-title">${item.name}</h3>
+                <div class="card-price">${item.price} ₽</div>
+            </div>
+            <div class="info-row">
+                ${showWeight ? `<span class="weight-info">${item.weight}</span>` : ''}
+                ${showVolume ? `<span class="volume-info">${item.volume}</span>` : ''}
+                ${showAlcohol ? `<span class="alcohol-info">${item.alcohol_content}</span>` : ''}
+            </div>
+            ${item.description ? `<p class="card-description">${item.description}</p>` : ''}
+            <div class="card-footer">
+                <button class="add-to-cart" data-id="${item.id}">
+                    ${quantityInCart > 0 ? `${quantityInCart} в корзине` : 'В корзину'}
+                </button>
+            </div>
+        </div>
+    </div>`;
+}
+
+// ---------- Обработчики событий ----------
+function setupImageClickHandlers() {
+    document.addEventListener('click', e => {
+        const cardImage = e.target.closest('.card-image');
+        if (cardImage) {
+            const img = cardImage.querySelector('.dish-image.loaded');
+            if (img && img.src) openImageModal(img.src);
+        }
+    });
+}
+
+function setupAddToCartHandlers() {
+    document.addEventListener('click', e => {
+        const btn = e.target.closest('.add-to-cart');
+        if (btn) {
+            e.preventDefault();
+            e.stopPropagation();
+            addToCart(parseInt(btn.dataset.id));
+        }
+    });
+}
+
+function setupDrinksTabHandlers() {
+    document.addEventListener('click', e => {
+        const tab = e.target.closest('.drinks-tab');
+        if (tab) {
+            e.preventDefault();
+            const subgroupId = tab.dataset.subgroup;
+            if (subgroupId && subgroupId !== currentDrinksSubgroupId) {
+                loadDrinksSubgroup(subgroupId);
+                currentDrinksSubgroupId = subgroupId;
+                document.querySelectorAll('.drinks-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            }
+        }
+    });
+}
+
+// ---------- Модальные окна и корзина (без изменений, но с findItemById) ----------
+function openImageModal(src) {
+    const modal = document.getElementById('imageModal');
+    document.getElementById('modalImage').src = src;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function openMobileNav() {
+    document.getElementById('mobileNav').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMobileNav() {
+    document.getElementById('mobileNav').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function openCart() {
+    renderCartItems();
+    document.getElementById('cartModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeCart() {
+    document.getElementById('cartModal').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast show';
+    toast.style.backgroundColor = type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : 'var(--primary-dark)';
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Корзина
+function addToCart(itemId) {
+    const item = findItemById(itemId);
+    if (!item) return;
+    const existing = cart.find(i => i.id === itemId);
+    if (existing) {
+        existing.quantity++;
+    } else {
+        cart.push({ id: item.id, name: item.name, price: item.price, quantity: 1 });
+    }
+    updateCartCount();
+    saveCartToLocalStorage();
+    updateAddToCartButton(itemId);
+    const btn = document.querySelector(`.add-to-cart[data-id="${itemId}"]`);
+    if (btn) {
+        btn.classList.add('added');
+        setTimeout(() => btn.classList.remove('added'), 300);
+    }
+    showToast(`"${item.name}" добавлен в корзину`, 'success');
+    if (navigator.vibrate) navigator.vibrate(50);
+}
+
+function updateQuantity(itemId, change) {
+    const index = cart.findIndex(i => i.id === itemId);
+    if (index === -1) return;
+    const cartItem = cart[index];
+    const newQty = cartItem.quantity + change;
+    if (newQty <= 0) {
+        cart.splice(index, 1);
+        showToast(`"${cartItem.name}" удалён из корзины`, 'error');
+    } else {
+        cartItem.quantity = newQty;
+        const item = findItemById(itemId);
+        showToast(`Количество "${item.name}" изменено на ${newQty}`, 'info');
+    }
+    updateCartCount();
+    saveCartToLocalStorage();
+    updateAddToCartButton(itemId);
+    renderCartItems();
+    if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function removeFromCart(itemId) {
+    const index = cart.findIndex(i => i.id === itemId);
+    if (index === -1) return;
+    const name = cart[index].name;
+    if (confirm(`Удалить "${name}" из корзины?`)) {
+        cart.splice(index, 1);
+        updateCartCount();
+        saveCartToLocalStorage();
+        updateAddToCartButton(itemId);
+        renderCartItems();
+        showToast(`"${name}" удалён из корзины`, 'error');
+    }
+}
+
+function updateCartCount() {
+    const total = cart.reduce((sum, i) => sum + i.quantity, 0);
+    document.getElementById('cartCount').textContent = total;
+    const icon = document.getElementById('cartIcon');
+    icon.style.color = total > 0 ? 'var(--primary-red)' : 'var(--primary-dark)';
+}
+
+function updateAddToCartButton(itemId) {
+    const btn = document.querySelector(`.add-to-cart[data-id="${itemId}"]`);
+    if (!btn) return;
+    const cartItem = cart.find(i => i.id === itemId);
+    if (cartItem) {
+        btn.textContent = `${cartItem.quantity} в корзине`;
+        btn.style.backgroundColor = '#4CAF50';
+    } else {
+        btn.textContent = 'В корзину';
+        btn.style.backgroundColor = '';
+    }
+}
+
+function saveCartToLocalStorage() {
+    localStorage.setItem('cart', JSON.stringify(cart));
+}
+
+function renderCartItems() {
+    const container = document.getElementById('cartItems');
+    const totalSpan = document.getElementById('cartTotal');
+    if (cart.length === 0) {
+        container.innerHTML = `<div class="empty-cart"><i class="fas fa-shopping-cart"></i><p>Корзина пуста</p></div>`;
+        totalSpan.textContent = '0';
+        return;
+    }
+    let html = '';
+    let total = 0;
+    cart.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        html += `
+        <div class="cart-item" data-id="${item.id}">
+            <div class="cart-item-info">
+                <div class="cart-item-name">${item.name}</div>
+                <div class="cart-item-price">${item.price} ₽ за шт.</div>
+            </div>
+            <div class="cart-item-controls">
+                <button class="quantity-btn decrease" data-id="${item.id}" ${item.quantity <= 1 ? 'disabled' : ''}><i class="fas fa-minus"></i></button>
+                <span class="cart-item-quantity">${item.quantity}</span>
+                <button class="quantity-btn increase" data-id="${item.id}"><i class="fas fa-plus"></i></button>
+            </div>
+            <div class="cart-item-total">${itemTotal} ₽</div>
+            <div class="cart-item-actions">
+                <button class="remove-item" data-id="${item.id}"><i class="fas fa-trash"></i><span class="remove-text">Удалить</span></button>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+    totalSpan.textContent = total;
+
+    container.querySelectorAll('.decrease').forEach(b => b.addEventListener('click', () => updateQuantity(parseInt(b.dataset.id), -1)));
+    container.querySelectorAll('.increase').forEach(b => b.addEventListener('click', () => updateQuantity(parseInt(b.dataset.id), 1)));
+    container.querySelectorAll('.remove-item').forEach(b => b.addEventListener('click', () => removeFromCart(parseInt(b.dataset.id))));
+}
+
+function setupTouchEvents() {
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', e => {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) e.preventDefault();
+        lastTouchEnd = now;
+    }, false);
+}
+
+function handleResize() {
+    if (window.innerWidth <= 768) {
+        initMobileQuickNav();
+        const tabs = document.getElementById('drinksTabs');
+        if (tabs) { tabs.style.overflowX = 'auto'; tabs.style.paddingBottom = '10px'; }
+    } else {
+        document.getElementById('categoryQuickNav').innerHTML = '';
+        const tabs = document.getElementById('drinksTabs');
+        if (tabs) tabs.style.overflowX = 'visible';
+    }
+}
+window.addEventListener('resize', handleResize);
+
+// Привязка событий интерфейса (выполнится после загрузки DOM)
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('cartIcon').addEventListener('click', openCart);
+    document.getElementById('closeCart').addEventListener('click', closeCart);
+    document.getElementById('mobileMenuBtn').addEventListener('click', openMobileNav);
+    document.getElementById('closeMobileNav').addEventListener('click', closeMobileNav);
+    document.getElementById('closeImageModal').addEventListener('click', closeImageModal);
+    document.getElementById('imageModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeImageModal(); });
+    document.getElementById('cartModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeCart(); });
+    document.getElementById('mobileNav').addEventListener('click', e => { if (e.target === e.currentTarget) closeMobileNav(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeImageModal(); });
+});

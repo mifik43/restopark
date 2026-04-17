@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RESTOPARK</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2c3e50 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: white;
+            margin-bottom: 50px;
+            font-size: 3rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 40px 20px;
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+            border-radius: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .btn-menu {
+            background: #d32f2f;
+        }
+        .btn-cartoons {
+            background: #f39c12;
+        }
+        .btn-games {
+            background: #27ae60;
+        }
+        @media (max-width: 600px) {
+            h1 { font-size: 2rem; }
+            .btn { font-size: 1.8rem; padding: 30px 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Добро пожаловать в RESTOPARK!</h1>
+        <div class="buttons">
+            <a href="/menu" class="btn btn-menu">🍽️ Меню</a>
+            <a href="/cartoons" class="btn btn-cartoons">📺 Мультфильмы</a>
+            <a href="/games" class="btn btn-games">🎮 Игры</a>
+        </div>
+    </div>
+</body>
+</html>

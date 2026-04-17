@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список игр</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #0a0f1a 0%, #1a1f2e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: white;
+            margin-bottom: 50px;
+            font-size: 3.5rem;
+            text-shadow: 0 0 20px #3a6ea5;
+        }
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        .game-card {
+            background: #2d3748;
+            border-radius: 30px;
+            padding: 30px 20px;
+            box-shadow: 0 15px 0 #1a202c, 0 25px 30px rgba(0,0,0,0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 2px solid #4a5568;
+        }
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 0 #1a202c, 0 30px 40px black;
+            border-color: #ffaa00;
+        }
+        .game-card:active {
+            transform: translateY(5px);
+            box-shadow: 0 10px 0 #1a202c, 0 20px 30px black;
+        }
+        .game-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            filter: drop-shadow(5px 10px 5px #0f0f1a);
+        }
+        .game-title {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: #ffd966;
+        }
+        .game-desc {
+            font-size: 18px;
+            color: #cbd5e0;
+        }
+        .back-home {
+            display: inline-block;
+            padding: 15px 40px;
+            background: #4a5568;
+            color: white;
+            text-decoration: none;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 60px;
+            box-shadow: 0 8px 0 #2d3748;
+            transition: 0.1s;
+            border: 2px solid #718096;
+        }
+        .back-home:active {
+            transform: translateY(8px);
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Выбери игру</h1>
+        <div class="games-grid">
+            <a href="/game-3d" class="game-card">
+                <div class="game-icon">🏃‍♂️</div>
+                <div class="game-title">Трудная дорога Скандика</div>
+                <div class="game-desc">3D-раннер, собирай монеты и убегай от препятствий</div>
+            </a>
+            <a href="/racing" class="game-card">
+                <div class="game-icon">🏎️</div>
+                <div class="game-title">Гонки</div>
+                <div class="game-desc">Гонки для небольших, но серьезных людей</div>
+            </a>
+            <a href="/3match" class="game-card">
+                <div class="game-icon">💎</div>
+                <div class="game-title">Три в ряд</div>
+                <div class="game-desc">Собирай самоцветы, создавай бомбы!</div>
+            </a>
+            <a href="/saper" class="game-card">
+                <div class="game-icon">🪤</div>
+                <div class="game-title">Мухоловка</div>
+                <div class="game-desc">Сапёр с тремя жизнями и отравленными клетками</div>
+            </a>
+            <a href="/snake" class="game-card">
+                <div class="game-icon">🐍</div>
+                <div class="game-title">Змейка</div>
+                <div class="game-desc">Классическая змейка. Ешь яблоки и расти!</div>
+            </a>
+            <a href="/tetris" class="game-card">
+                <div class="game-icon">🧩</div>
+                <div class="game-title">Тетрис</div>
+                <div class="game-desc">Собирай линии, управляя падающими фигурами</div>
+            </a>
+        </div>
+        <a href="/" class="back-home">← На главную</a>
+    </div>
+</body>
+</html>
