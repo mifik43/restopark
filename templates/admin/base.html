@@ -49,6 +49,11 @@
                                 <i class="bi bi-card-list"></i> Блюда
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin_stats' %}active{% endif %}" href="{{ url_for('admin_stats') }}">
+                                <i class="bi bi-bar-chart"></i> Статистика игр
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>

@@ -3,145 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Три в ряд ✨ Бомбы и пауза</title>
+    <title>Три в ряд ✨ Плавная версия</title>
     <style>
         * {
             user-select: none;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
         }
-
         body {
             background: linear-gradient(145deg, #1e2a2f 0%, #0f1a1f 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Segoe UI', 'Poppins', 'Montserrat', system-ui, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             margin: 0;
             padding: 16px;
         }
-
         .game-container {
             background: rgba(0, 0, 0, 0.4);
             backdrop-filter: blur(6px);
             border-radius: 60px;
             padding: 16px 20px 24px 20px;
-            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.1);
+            box-shadow: 0 20px 35px rgba(0,0,0,0.5);
+            max-width: 500px;
+            width: 100%;
         }
-
         .game-panel {
             background: linear-gradient(135deg, #2a3a2c, #1c2a1f);
             border-radius: 48px;
             padding: 18px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 12px 24px rgba(0,0,0,0.4);
         }
-
         canvas {
             display: block;
             margin: 0 auto;
             border-radius: 28px;
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
-            cursor: pointer;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.5);
             background: #1f2b23;
             width: 100%;
             height: auto;
-            aspect-ratio: 1 / 1;
+            aspect-ratio: 1/1;
+            touch-action: none;
         }
-
-        /* Единая панель управления */
         .info-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 16px;
+            gap: 10px;
             margin-bottom: 18px;
             flex-wrap: wrap;
-            justify-content: center;
         }
-
         .score-box {
             background: linear-gradient(145deg, #1f2c21, #121d13);
             padding: 6px 24px;
             border-radius: 80px;
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.3);
             text-align: center;
         }
-
         .score-label {
             font-size: 0.8rem;
-            letter-spacing: 1.5px;
-            font-weight: 600;
             color: #f9e2a1;
             text-transform: uppercase;
         }
-
         .score-value {
-            font-size: 2.8rem;
+            font-size: 2.5rem;
             font-weight: 800;
             color: #ffeaac;
             line-height: 1;
             text-shadow: 0 3px 0 #7a551a;
-            font-family: monospace;
         }
-
         .controls {
             display: flex;
-            gap: 12px;
-            justify-content: center;
+            gap: 8px;
             flex-wrap: wrap;
         }
-
-        /* Единый стиль кнопок */
-        .btn, .back-btn {
+        .btn {
             background: radial-gradient(circle at 30% 10%, #ffb347, #ff7e05);
             border: none;
             font-weight: bold;
             font-size: 1rem;
-            font-family: inherit;
             padding: 8px 18px;
             border-radius: 60px;
             color: white;
             text-shadow: 0 1px 2px rgba(0,0,0,0.4);
             box-shadow: 0 6px 0 #a34000;
-            transition: 0.07s linear;
+            transition: 0.07s;
             cursor: pointer;
-            touch-action: manipulation;
-            letter-spacing: 1px;
             white-space: nowrap;
             text-decoration: none;
-            display: inline-block;
-            text-align: center;
         }
-        .btn:active, .back-btn:active {
-            transform: translateY(3px);
-            box-shadow: 0 3px 0 #a34000;
-        }
+        .btn:active { transform: translateY(3px); box-shadow: 0 3px 0 #a34000; }
         .restart-btn { background: radial-gradient(circle at 30% 10%, #6e906b, #42633b); box-shadow: 0 6px 0 #2b4a25; }
-        .shuffle-btn { background: radial-gradient(circle at 30% 10%, #bc8a60, #7a5a3c); box-shadow: 0 6px 0 #5c4030; }
         .pause-btn { background: radial-gradient(circle at 30% 10%, #7c6e5e, #5c4e3e); box-shadow: 0 6px 0 #3a3028; }
         .exit-btn { background: radial-gradient(circle at 30% 10%, #4a5a3a, #2e3a22); box-shadow: 0 6px 0 #1f2a14; }
-
         .status {
             text-align: center;
             margin-top: 16px;
             background: #1f2b20cc;
             padding: 8px 12px;
             border-radius: 50px;
-            font-weight: 500;
-            font-size: 0.85rem;
             color: #fff3cf;
-            backdrop-filter: blur(4px);
-            transition: all 0.2s;
+            font-size: 0.85rem;
         }
-
         h2 {
             margin: 0 0 6px 0;
             font-size: 1.5rem;
             text-align: center;
             color: #ffefbf;
             text-shadow: 0 2px 2px black;
-            letter-spacing: 2px;
         }
         footer {
             font-size: 0.7rem;
@@ -149,145 +117,125 @@
             margin-top: 14px;
             color: #cde2c0;
         }
-
-        @media (max-width: 700px) {
-            .btn { font-size: 0.9rem; padding: 5px 12px; }
-            .score-value { font-size: 2.2rem; }
-        }
-        @media (max-width: 550px) {
-            .game-container { padding: 8px 12px 16px 12px; }
+        @media (max-width: 500px) {
+            .btn { font-size: 0.9rem; padding: 6px 12px; }
+            .score-value { font-size: 2rem; }
         }
     </style>
 </head>
 <body>
-<div>
-    <div class="game-container">
-        <div class="game-panel">
-            <h2>💎 ТРИ В РЯД 💎</h2>
-            <div class="info-bar">
-                <div class="score-box">
-                    <div class="score-label">СЧЁТ</div>
-                    <div class="score-value" id="scoreDisplay">0</div>
-                </div>
-                <div class="controls">
-                    <button class="btn restart-btn" id="resetGameBtn">🔄</button>
-                    <button class="btn shuffle-btn" id="shuffleBtn">🎲</button>
-                    <button class="btn pause-btn" id="pauseBtn">⏸</button>
-                    <a href="/games" class="btn exit-btn">🚪 ВЫХОД</a>
-                </div>
+<div class="game-container">
+    <div class="game-panel">
+        <h2>💎 ТРИ В РЯД 💎</h2>
+        <div class="info-bar">
+            <div class="score-box">
+                <div class="score-label">СЧЁТ</div>
+                <div class="score-value" id="scoreDisplay">0</div>
             </div>
-            <canvas id="gameCanvas" width="360" height="360"></canvas>
-            <div class="status" id="statusMsg">✨ Нажми на самоцвет, затем на соседний ✨</div>
-            <footer>🔹 4 в ряд → бомба (💣) &nbsp;&nbsp;🔹 5+ в ряд → супер-бомба (💥)<br>
-            ✨ Нажми на бомбу, чтобы взорвать ✨</footer>
+            <div class="controls">
+                <button class="btn restart-btn" id="resetGameBtn">🔄</button>
+                <button class="btn pause-btn" id="pauseBtn">⏸</button>
+                <button class="btn sound-btn" id="soundToggleBtn" title="Включить/выключить звук">🔊 ВКЛ</button>
+                <a href="/games" class="btn exit-btn">🚪 ВЫХОД</a>
+            </div>
         </div>
+        <canvas id="gameCanvas" width="360" height="360"></canvas>
+        <div class="status" id="statusMsg">✨ Нажми на самоцвет и соседний ✨</div>
+        <footer>🔹 4 в ряд → 💣 &nbsp;&nbsp;🔹 5+ → 💥<br>✨ Нажми на бомбу, чтобы взорвать</footer>
     </div>
 </div>
 
 <script>
     (function(){
-        // ---------- ПАРАМЕТРЫ ----------
-        const ROWS = 6;
-        const COLS = 6;
+        // ---------- КОНФИГУРАЦИЯ ----------
+        const ROWS = 6, COLS = 6;
         const TILE_SIZE = 60;
         const TYPES = 5;
-        
-        const CELL_NORMAL = 'normal';
-        const CELL_BOMB = 'bomb';
-        const CELL_SUPER = 'super';
-        
-        const SWAP_DURATION = 280;
-        const FALL_DURATION = 320;
-        const EXPLOSION_DURATION = 300;
-        const NEW_GEM_DELAY_RANGE = 80;
-        
+        const SWAP_DURATION = 220;
+        const FALL_DURATION = 280;
+        const EXPLOSION_DURATION = 350;
+
+        const CELL_NORMAL = 'normal', CELL_BOMB = 'bomb', CELL_SUPER = 'super';
+
         let board = [];
         let currentScore = 0;
         let selectedRow = null, selectedCol = null;
         let processingMove = false;
         let isPaused = false;
         
-        let animFrameId = null;
+        // Анимация
+        let animFrame = null;
         let activeSwap = null;
         let activeFalls = [];
         let activeExplosions = [];
-        let animationResolve = null;
-        
+        let resolveAnimation = null;
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreSpan = document.getElementById('scoreDisplay');
         const statusDiv = document.getElementById('statusMsg');
         const pauseBtn = document.getElementById('pauseBtn');
-        
+
         const GEM_COLORS = ['#E86A5A', '#5DCC8C', '#66AFFF', '#FFD966', '#C68BEF'];
-        
+
+        // ---------- УТИЛИТЫ ----------
         function getRandomGem() {
             return { type: CELL_NORMAL, value: Math.floor(Math.random() * TYPES) };
         }
-        
-        function copyBoard(source) {
-            return source.map(row => row.map(cell => ({ ...cell })));
+
+        function copyBoard(src) {
+            return src.map(row => row.map(cell => ({ ...cell })));
         }
-        
-        function swapCells(boardGrid, r1,c1, r2,c2) {
-            let temp = boardGrid[r1][c1];
-            boardGrid[r1][c1] = boardGrid[r2][c2];
-            boardGrid[r2][c2] = temp;
+
+        function swapCells(grid, r1,c1, r2,c2) {
+            [grid[r1][c1], grid[r2][c2]] = [grid[r2][c2], grid[r1][c1]];
         }
-        
-        function findAllLines(boardGrid) {
+
+        function findAllLines(grid) {
             const lines = [];
-            for (let r = 0; r < ROWS; r++) {
-                let len = 1;
-                let start = 0;
-                for (let c = 1; c <= COLS; c++) {
-                    const curr = boardGrid[r][c];
-                    const prev = boardGrid[r][c-1];
-                    if (c < COLS && curr?.type === CELL_NORMAL && prev?.type === CELL_NORMAL && curr.value === prev.value) {
-                        len++;
-                    } else {
-                        if (len >= 3) {
-                            const cells = [];
-                            for (let i = start; i < start + len; i++) cells.push({ r, c: i });
-                            lines.push({ cells, length: len, orientation: 'horizontal' });
-                        }
-                        len = 1;
-                        start = c;
+            // горизонтали
+            for (let r=0; r<ROWS; r++) {
+                for (let c=0; c<COLS-2; c++) {
+                    const val = grid[r][c].value;
+                    if (grid[r][c].type !== CELL_NORMAL) continue;
+                    let len = 1;
+                    while (c+len < COLS && grid[r][c+len].type === CELL_NORMAL && grid[r][c+len].value === val) len++;
+                    if (len >= 3) {
+                        const cells = [];
+                        for (let i=0; i<len; i++) cells.push({r, c: c+i});
+                        lines.push({ cells, length: len, orientation: 'horizontal' });
+                        c += len-1;
                     }
                 }
             }
-            for (let c = 0; c < COLS; c++) {
-                let len = 1;
-                let start = 0;
-                for (let r = 1; r <= ROWS; r++) {
-                    const curr = boardGrid[r]?.[c];
-                    const prev = boardGrid[r-1]?.[c];
-                    if (r < ROWS && curr?.type === CELL_NORMAL && prev?.type === CELL_NORMAL && curr.value === prev.value) {
-                        len++;
-                    } else {
-                        if (len >= 3) {
-                            const cells = [];
-                            for (let i = start; i < start + len; i++) cells.push({ r: i, c });
-                            lines.push({ cells, length: len, orientation: 'vertical' });
-                        }
-                        len = 1;
-                        start = r;
+            // вертикали
+            for (let c=0; c<COLS; c++) {
+                for (let r=0; r<ROWS-2; r++) {
+                    const val = grid[r][c].value;
+                    if (grid[r][c].type !== CELL_NORMAL) continue;
+                    let len = 1;
+                    while (r+len < ROWS && grid[r+len][c].type === CELL_NORMAL && grid[r+len][c].value === val) len++;
+                    if (len >= 3) {
+                        const cells = [];
+                        for (let i=0; i<len; i++) cells.push({r: r+i, c});
+                        lines.push({ cells, length: len, orientation: 'vertical' });
+                        r += len-1;
                     }
                 }
             }
             return lines;
         }
-        
-        function hasAnyValidMove(boardGrid) {
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
+
+        function hasAnyMove(grid) {
+            for (let r=0; r<ROWS; r++) {
+                for (let c=0; c<COLS; c++) {
                     if (c+1 < COLS) {
-                        let test = copyBoard(boardGrid);
+                        const test = copyBoard(grid);
                         swapCells(test, r,c, r,c+1);
                         if (findAllLines(test).length > 0) return true;
                     }
                     if (r+1 < ROWS) {
-                        let test = copyBoard(boardGrid);
+                        const test = copyBoard(grid);
                         swapCells(test, r,c, r+1,c);
                         if (findAllLines(test).length > 0) return true;
                     }
@@ -295,308 +243,277 @@
             }
             return false;
         }
-        
-        function addPoints(points) {
-            currentScore += points;
+
+        function addPoints(pts) {
+            currentScore += pts;
             scoreSpan.innerText = currentScore;
         }
-        
-        function startAnimationLoop() {
-            if (animFrameId) cancelAnimationFrame(animFrameId);
+
+        // ---------- АНИМАЦИЯ (плавная) ----------
+        function startAnimLoop() {
+            if (animFrame) cancelAnimationFrame(animFrame);
             function animate(now) {
                 if (!isPaused) {
-                    let hasActive = false;
+                    let active = false;
                     if (activeSwap) {
-                        if (now - activeSwap.startTime >= activeSwap.duration) activeSwap = null;
-                        else hasActive = true;
+                        if (now - activeSwap.startTime >= SWAP_DURATION) activeSwap = null;
+                        else active = true;
                     }
                     if (activeFalls.length) {
-                        activeFalls = activeFalls.filter(f => now - f.startTime < f.duration);
-                        if (activeFalls.length) hasActive = true;
+                        activeFalls = activeFalls.filter(f => now - f.startTime < FALL_DURATION);
+                        if (activeFalls.length) active = true;
                     }
                     if (activeExplosions.length) {
-                        activeExplosions = activeExplosions.filter(e => now - e.startTime < e.duration);
-                        if (activeExplosions.length) hasActive = true;
+                        activeExplosions = activeExplosions.filter(e => now - e.startTime < EXPLOSION_DURATION);
+                        if (activeExplosions.length) active = true;
                     }
                     drawBoard(now);
-                    if (hasActive) animFrameId = requestAnimationFrame(animate);
+                    if (active) animFrame = requestAnimationFrame(animate);
                     else {
-                        animFrameId = null;
-                        if (animationResolve) { animationResolve(); animationResolve = null; }
+                        animFrame = null;
+                        if (resolveAnimation) { resolveAnimation(); resolveAnimation = null; }
                     }
                 } else {
                     drawBoard(performance.now());
-                    animFrameId = requestAnimationFrame(animate);
+                    animFrame = requestAnimationFrame(animate);
                 }
             }
-            animFrameId = requestAnimationFrame(animate);
+            animFrame = requestAnimationFrame(animate);
         }
-        
+
         function waitForAnimations() {
             if (isPaused) return Promise.resolve();
             return new Promise(resolve => {
-                if (!activeSwap && activeFalls.length === 0 && activeExplosions.length === 0) resolve();
-                else animationResolve = resolve;
-                if (!animFrameId) startAnimationLoop();
+                if (!activeSwap && !activeFalls.length && !activeExplosions.length) resolve();
+                else resolveAnimation = resolve;
+                if (!animFrame) startAnimLoop();
             });
         }
-        
+
+        // ---------- ОТРИСОВКА (с интерполяцией) ----------
         function drawBoard(now) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const fallOffsets = new Map();
+            
+            // Собираем смещения для падающих камней
+            const offsets = new Map();
             for (let f of activeFalls) {
-                let t = Math.min(1, (now - f.startTime) / f.duration);
-                let ease = 1 - Math.pow(1 - t, 3);
-                let curX = f.startX + (f.endX - f.startX) * ease;
-                let curY = f.startY + (f.endY - f.startY) * ease;
-                fallOffsets.set(`${f.row},${f.col}`, { dx: curX - f.startX, dy: curY - f.startY });
+                const t = Math.min(1, (now - f.startTime) / FALL_DURATION);
+                const ease = 1 - Math.pow(1 - t, 2.5);
+                const curX = f.startX + (f.endX - f.startX) * ease;
+                const curY = f.startY + (f.endY - f.startY) * ease;
+                offsets.set(`${f.row},${f.col}`, { x: curX - f.startX, y: curY - f.startY });
             }
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
-                    if (activeSwap && 
-                        ((activeSwap.fromRow === r && activeSwap.fromCol === c) ||
-                         (activeSwap.toRow === r && activeSwap.toCol === c))) continue;
-                    let cell = board[r][c];
+
+            // Рисуем статичные камни
+            for (let r=0; r<ROWS; r++) {
+                for (let c=0; c<COLS; c++) {
+                    if (activeSwap && ((activeSwap.fromRow === r && activeSwap.fromCol === c) || 
+                                      (activeSwap.toRow === r && activeSwap.toCol === c))) continue;
+                    const cell = board[r][c];
                     if (!cell) continue;
-                    let x = c * TILE_SIZE;
-                    let y = r * TILE_SIZE;
-                    let off = fallOffsets.get(`${r},${c}`);
-                    if (off) { x += off.dx; y += off.dy; }
+                    let x = c * TILE_SIZE, y = r * TILE_SIZE;
+                    const off = offsets.get(`${r},${c}`);
+                    if (off) { x += off.x; y += off.y; }
                     drawGem(x, y, cell, r === selectedRow && c === selectedCol);
                 }
             }
+
+            // Анимация обмена
             if (activeSwap) {
-                let t = Math.min(1, (now - activeSwap.startTime) / activeSwap.duration);
-                let ease = 1 - Math.pow(1 - t, 3);
-                const fx = activeSwap.fromCol * TILE_SIZE, fy = activeSwap.fromRow * TILE_SIZE;
-                const tx = activeSwap.toCol * TILE_SIZE, ty = activeSwap.toRow * TILE_SIZE;
-                const curX1 = fx + (tx - fx) * ease;
-                const curY1 = fy + (ty - fy) * ease;
-                const curX2 = tx + (fx - tx) * ease;
-                const curY2 = ty + (fy - ty) * ease;
+                const t = Math.min(1, (now - activeSwap.startTime) / SWAP_DURATION);
+                const ease = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+                const fromX = activeSwap.fromCol * TILE_SIZE, fromY = activeSwap.fromRow * TILE_SIZE;
+                const toX = activeSwap.toCol * TILE_SIZE, toY = activeSwap.toRow * TILE_SIZE;
+                const curX1 = fromX + (toX - fromX) * ease;
+                const curY1 = fromY + (toY - fromY) * ease;
+                const curX2 = toX + (fromX - toX) * ease;
+                const curY2 = toY + (fromY - toY) * ease;
                 drawGem(curX1, curY1, { type: CELL_NORMAL, value: activeSwap.fromValue }, false);
                 drawGem(curX2, curY2, { type: CELL_NORMAL, value: activeSwap.toValue }, false);
             }
+
+            // Взрывы
             for (let exp of activeExplosions) {
-                let t = Math.min(1, (now - exp.startTime) / exp.duration);
-                let radius = TILE_SIZE * 0.5 * (1 + t * 2);
-                let opacity = 1 - t;
-                const centerX = exp.col * TILE_SIZE + TILE_SIZE/2;
-                const centerY = exp.row * TILE_SIZE + TILE_SIZE/2;
+                const t = Math.min(1, (now - exp.startTime) / EXPLOSION_DURATION);
+                const radius = TILE_SIZE * 0.4 * (1 + t * 2.5);
+                const alpha = Math.max(0, 1 - t * 1.2);
+                const cx = exp.col * TILE_SIZE + TILE_SIZE/2;
+                const cy = exp.row * TILE_SIZE + TILE_SIZE/2;
                 ctx.save();
-                ctx.shadowBlur = 0;
-                ctx.globalAlpha = opacity;
-                const grad = ctx.createRadialGradient(centerX, centerY, radius*0.3, centerX, centerY, radius);
-                grad.addColorStop(0, exp.isSuper ? '#FFAA33' : '#FF6600');
-                grad.addColorStop(1, exp.isSuper ? '#FF4400' : '#CC3300');
+                ctx.globalAlpha = alpha;
+                const grad = ctx.createRadialGradient(cx, cy, radius*0.3, cx, cy, radius);
+                grad.addColorStop(0, exp.isSuper ? '#FFD700' : '#FF8C00');
+                grad.addColorStop(1, exp.isSuper ? '#FF4500' : '#B22222');
                 ctx.fillStyle = grad;
                 ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, 0, Math.PI*2);
+                ctx.arc(cx, cy, radius, 0, Math.PI*2);
                 ctx.fill();
                 ctx.restore();
             }
+
             if (isPaused) {
-                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.font = 'bold 24px "Segoe UI"';
                 ctx.fillStyle = '#ffefbf';
-                ctx.shadowBlur = 0;
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText("⏸ ПАУЗА", canvas.width/2, canvas.height/2);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('⏸ ПАУЗА', canvas.width/2, canvas.height/2);
             }
         }
-        
+
         function drawGem(x, y, cell, isSelected) {
+            const cx = x + TILE_SIZE/2, cy = y + TILE_SIZE/2;
             const radius = TILE_SIZE * 0.4;
-            const centerX = x + TILE_SIZE/2;
-            const centerY = y + TILE_SIZE/2;
-            if (cell.type === CELL_NORMAL) {
-                ctx.fillStyle = GEM_COLORS[cell.value % GEM_COLORS.length];
-            } else if (cell.type === CELL_BOMB) {
-                ctx.fillStyle = '#2a2a2a';
-            } else {
-                ctx.fillStyle = '#FFB347';
-            }
+            
+            // Основной цвет
+            let baseColor = '#888';
+            if (cell.type === CELL_NORMAL) baseColor = GEM_COLORS[cell.value % GEM_COLORS.length];
+            else if (cell.type === CELL_BOMB) baseColor = '#2a2a2a';
+            else if (cell.type === CELL_SUPER) baseColor = '#FFB347';
+
+            ctx.shadowColor = isSelected ? '#FFE484' : 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = isSelected ? 15 : 8;
+            
+            // Тело
             ctx.beginPath();
-            ctx.arc(centerX, centerY, radius-2, 0, Math.PI*2);
+            ctx.arc(cx, cy, radius-2, 0, Math.PI*2);
+            ctx.fillStyle = baseColor;
             ctx.fill();
-            ctx.fillStyle = 'rgba(255,255,210,0.3)';
+            
+            // Блик
+            ctx.shadowBlur = 0;
             ctx.beginPath();
-            ctx.arc(centerX-3, centerY-3, radius-8, 0, Math.PI*2);
+            ctx.arc(cx-4, cy-4, radius-8, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(255,255,240,0.35)';
             ctx.fill();
+
+            // Обводка
             ctx.strokeStyle = '#FFF1BD';
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(centerX, centerY, radius-2, 0, Math.PI*2);
+            ctx.arc(cx, cy, radius-2, 0, Math.PI*2);
             ctx.stroke();
-            if (isSelected) {
-                ctx.strokeStyle = '#FFE484';
-                ctx.lineWidth = 3.5;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius-1, 0, Math.PI*2);
-                ctx.stroke();
-            }
+
+            // Иконка для бомб
             if (cell.type === CELL_BOMB) {
-                ctx.fillStyle = '#FFD966';
                 ctx.font = `${Math.floor(radius*1.2)}px "Segoe UI"`;
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText("💣", centerX, centerY+2);
+                ctx.fillStyle = '#FFD966';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('💣', cx, cy+2);
             } else if (cell.type === CELL_SUPER) {
-                ctx.fillStyle = '#FFAA33';
                 ctx.font = `${Math.floor(radius*1.3)}px "Segoe UI"`;
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText("💥", centerX, centerY+2);
+                ctx.fillStyle = '#FF4500';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('💥', cx, cy+2);
             }
         }
-        
-        async function animateExplosion(cellsSet, isSuper = false) {
-            if (!cellsSet.size) return;
-            const now = performance.now();
-            for (let coord of cellsSet) {
-                let [r,c] = coord.split(',').map(Number);
-                activeExplosions.push({
-                    row: r, col: c,
-                    startTime: now,
-                    duration: EXPLOSION_DURATION,
-                    isSuper: isSuper
-                });
+
+        // ---------- ГРАВИТАЦИЯ И ЗАПОЛНЕНИЕ ----------
+        async function applyGravityAndRefill(removedSet, skipExplode = false) {
+            if (removedSet.size === 0) return;
+            if (!skipExplode) {
+                const now = performance.now();
+                for (let coord of removedSet) {
+                    const [r,c] = coord.split(',').map(Number);
+                    activeExplosions.push({ row: r, col: c, startTime: now, isSuper: false });
+                }
+                startAnimLoop();
+                await waitForAnimations();
             }
-            startAnimationLoop();
-            await waitForAnimations();
-        }
-        
-        async function applyGravityAndRefill(removedCells, skipExplosion = false) {
-            if (!removedCells || removedCells.size === 0) return;
-            if (!skipExplosion) {
-                await animateExplosion(removedCells, false);
-            }
-            for (let coord of removedCells) {
-                let [r,c] = coord.split(',').map(Number);
+
+            // Удаляем камни
+            for (let coord of removedSet) {
+                const [r,c] = coord.split(',').map(Number);
                 board[r][c] = null;
             }
-            const newFalls = [];
-            for (let c = 0; c < COLS; c++) {
-                let column = [];
-                for (let r = 0; r < ROWS; r++) if (board[r][c] !== null) column.push(board[r][c]);
-                let missing = ROWS - column.length;
-                let newTop = [];
-                for (let i = 0; i < missing; i++) newTop.push(getRandomGem());
-                let finalCol = [...newTop, ...column];
-                let oldIndex = 0;
-                for (let newRow = 0; newRow < ROWS; newRow++) {
-                    if (newRow < missing) {
-                        const delay = Math.random() * NEW_GEM_DELAY_RANGE;
-                        const startXOffset = (Math.random() - 0.5) * 12;
-                        newFalls.push({
-                            row: newRow, col: c,
-                            startX: c*TILE_SIZE + startXOffset,
-                            startY: -TILE_SIZE - Math.random() * 20,
-                            endX: c*TILE_SIZE,
-                            endY: newRow*TILE_SIZE,
-                            startTime: performance.now() + delay,
-                            duration: FALL_DURATION,
-                            finalValue: finalCol[newRow]
-                        });
-                    } else {
-                        let found = false;
-                        for (let oldRow = 0; oldRow < ROWS; oldRow++) {
-                            if (board[oldRow][c] !== null && oldRow === oldIndex) {
-                                const startY = oldRow * TILE_SIZE;
-                                if (Math.abs(startY - newRow*TILE_SIZE) > 0.1) {
-                                    newFalls.push({
-                                        row: newRow, col: c,
-                                        startX: c*TILE_SIZE,
-                                        startY: startY,
-                                        endX: c*TILE_SIZE,
-                                        endY: newRow*TILE_SIZE,
-                                        startTime: performance.now(),
-                                        duration: FALL_DURATION,
-                                        finalValue: finalCol[newRow]
-                                    });
-                                }
-                                oldIndex++;
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            newFalls.push({
-                                row: newRow, col: c,
-                                startX: c*TILE_SIZE,
-                                startY: -TILE_SIZE,
-                                endX: c*TILE_SIZE,
-                                endY: newRow*TILE_SIZE,
-                                startTime: performance.now(),
-                                duration: FALL_DURATION,
-                                finalValue: finalCol[newRow]
-                            });
-                        }
-                    }
+
+            const falls = [];
+            for (let c=0; c<COLS; c++) {
+                const column = [];
+                for (let r=0; r<ROWS; r++) if (board[r][c] !== null) column.push(board[r][c]);
+                const missing = ROWS - column.length;
+                const newTop = Array.from({length: missing}, getRandomGem);
+                const finalCol = [...newTop, ...column];
+                
+                for (let r=0; r<ROWS; r++) {
+                    const startY = (r < missing) ? -TILE_SIZE - (missing-r)*15 : (r - missing) * TILE_SIZE;
+                    falls.push({
+                        row: r, col: c,
+                        startX: c*TILE_SIZE, startY,
+                        endX: c*TILE_SIZE, endY: r*TILE_SIZE,
+                        startTime: performance.now() + (r < missing ? Math.random()*60 : 0),
+                        finalValue: finalCol[r]
+                    });
                 }
             }
-            activeFalls = newFalls;
-            startAnimationLoop();
+
+            activeFalls = falls;
+            startAnimLoop();
             await waitForAnimations();
-            for (let c = 0; c < COLS; c++) {
-                let column = [];
-                for (let r = 0; r < ROWS; r++) if (board[r][c] !== null) column.push(board[r][c]);
-                let missing = ROWS - column.length;
-                let newTop = [];
-                for (let i = 0; i < missing; i++) newTop.push(getRandomGem());
-                let finalCol = [...newTop, ...column];
-                for (let r = 0; r < ROWS; r++) board[r][c] = finalCol[r];
+
+            // Применяем новые значения
+            for (let c=0; c<COLS; c++) {
+                const column = [];
+                for (let r=0; r<ROWS; r++) if (board[r][c] !== null) column.push(board[r][c]);
+                const missing = ROWS - column.length;
+                const finalCol = [...Array.from({length: missing}, getRandomGem), ...column];
+                for (let r=0; r<ROWS; r++) board[r][c] = finalCol[r];
             }
             drawBoard(performance.now());
         }
-        
-        async function explodeBomb(row, col, chainLevel = 0) {
+
+        // ---------- ВЗРЫВ БОМБ ----------
+        async function explodeBomb(row, col, chain=0) {
             const toRemove = new Set();
-            let radius = 1 + chainLevel;
+            const radius = 1 + chain;
             toRemove.add(`${row},${col}`);
-            const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
-            for (let [dr, dc] of dirs) {
-                for (let k = 1; k <= radius; k++) {
-                    let nr = row + dr*k, nc = col + dc*k;
+            for (let dr=-radius; dr<=radius; dr++) {
+                for (let dc=-radius; dc<=radius; dc++) {
+                    if (Math.abs(dr)+Math.abs(dc) > radius+1) continue;
+                    const nr = row+dr, nc = col+dc;
                     if (nr>=0 && nr<ROWS && nc>=0 && nc<COLS) toRemove.add(`${nr},${nc}`);
                 }
             }
             const otherBombs = [];
             for (let coord of toRemove) {
-                let [r,c] = coord.split(',').map(Number);
+                const [r,c] = coord.split(',').map(Number);
                 const cell = board[r][c];
-                if (cell && (cell.type === CELL_BOMB || cell.type === CELL_SUPER) && !(r === row && c === col)) {
+                if (cell && (cell.type === CELL_BOMB || cell.type === CELL_SUPER) && !(r===row && c===col)) {
                     otherBombs.push({r,c, type: cell.type});
                 }
             }
             addPoints(toRemove.size * 10);
             await applyGravityAndRefill(toRemove);
-            for (let bomb of otherBombs) {
-                if (bomb.type === CELL_BOMB) {
-                    await explodeBomb(bomb.r, bomb.c, chainLevel + 1);
-                } else if (bomb.type === CELL_SUPER) {
-                    await superExplode(bomb.r, bomb.c, chainLevel + 1);
-                }
+            for (let b of otherBombs) {
+                if (b.type === CELL_BOMB) await explodeBomb(b.r, b.c, chain+1);
+                else await superExplode(b.r, b.c);
             }
         }
-        
-        async function superExplode(row, col, chainLevel = 0) {
-            const allCells = new Set();
-            for (let r=0; r<ROWS; r++)
-                for (let c=0; c<COLS; c++)
-                    allCells.add(`${r},${c}`);
-            addPoints(allCells.size * 10);
-            await animateExplosion(allCells, true);
-            for (let coord of allCells) {
-                let [r,c] = coord.split(',').map(Number);
+
+        async function superExplode(row, col) {
+            const all = new Set();
+            for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) all.add(`${r},${c}`);
+            addPoints(all.size * 15);
+            // Анимация супер-взрыва
+            const now = performance.now();
+            for (let coord of all) {
+                const [r,c] = coord.split(',').map(Number);
+                activeExplosions.push({ row: r, col: c, startTime: now, isSuper: true });
+            }
+            startAnimLoop();
+            await waitForAnimations();
+            for (let coord of all) {
+                const [r,c] = coord.split(',').map(Number);
                 board[r][c] = null;
             }
-            await applyGravityAndRefill(allCells, true);
+            await applyGravityAndRefill(all, true);
         }
-        
-        async function processMatchChain() {
+
+        // ---------- ОБРАБОТКА СОВПАДЕНИЙ ----------
+        async function processMatches() {
             let changed = true;
             while (changed) {
                 changed = false;
@@ -608,255 +525,176 @@
                 for (let line of lines) {
                     const len = line.length;
                     if (len >= 5) {
-                        const center = line.cells[Math.floor((len-1)/2)];
-                        bonuses.push({ row: center.r, col: center.c, type: CELL_SUPER });
-                        for (let cell of line.cells) {
-                            if (!(cell.r === center.r && cell.c === center.c))
-                                toRemove.add(`${cell.r},${cell.c}`);
-                        }
-                        addPoints(len * 10);
+                        const mid = line.cells[Math.floor((len-1)/2)];
+                        bonuses.push({ row: mid.r, col: mid.c, type: CELL_SUPER });
+                        for (let cell of line.cells) if (!(cell.r===mid.r && cell.c===mid.c)) toRemove.add(`${cell.r},${cell.c}`);
+                        addPoints(len * 12);
                     } else if (len === 4) {
-                        const center = line.cells[Math.floor((len-1)/2)];
-                        const gem = board[center.r][center.c];
-                        bonuses.push({ row: center.r, col: center.c, type: CELL_BOMB, value: gem.value });
-                        for (let cell of line.cells) {
-                            if (!(cell.r === center.r && cell.c === center.c))
-                                toRemove.add(`${cell.r},${cell.c}`);
-                        }
+                        const mid = line.cells[Math.floor((len-1)/2)];
+                        bonuses.push({ row: mid.r, col: mid.c, type: CELL_BOMB, value: board[mid.r][mid.c].value });
+                        for (let cell of line.cells) if (!(cell.r===mid.r && cell.c===mid.c)) toRemove.add(`${cell.r},${cell.c}`);
                         addPoints(len * 10);
                     } else {
                         for (let cell of line.cells) toRemove.add(`${cell.r},${cell.c}`);
-                        addPoints(len * 10);
+                        addPoints(len * 8);
                     }
                 }
                 if (toRemove.size > 0) await applyGravityAndRefill(toRemove);
                 for (let b of bonuses) {
-                    if (board[b.row][b.col] === null || board[b.row][b.col].type === CELL_NORMAL) {
-                        board[b.row][b.col] = { type: b.type, value: b.value !== undefined ? b.value : 0 };
+                    if (board[b.row][b.col] && board[b.row][b.col].type === CELL_NORMAL) {
+                        board[b.row][b.col] = { type: b.type, value: b.value ?? 0 };
                     }
                 }
             }
         }
-        
-        async function trySwapWithAnimation(r1,c1, r2,c2) {
+
+        // ---------- ОБМЕН С АНИМАЦИЕЙ ----------
+        async function trySwap(r1,c1,r2,c2) {
             if (processingMove || isPaused) return false;
-            const isAdjacent = (Math.abs(r1-r2) + Math.abs(c1-c2)) === 1;
-            if (!isAdjacent) return false;
-            const testBoard = copyBoard(board);
-            swapCells(testBoard, r1,c1, r2,c2);
-            if (findAllLines(testBoard).length === 0) {
-                statusDiv.innerHTML = '❌ Обмен не даст ряд. Попробуй иначе!';
-                setTimeout(() => updateStatusMessage(), 1000);
+            if (Math.abs(r1-r2) + Math.abs(c1-c2) !== 1) return false;
+            const test = copyBoard(board);
+            swapCells(test, r1,c1, r2,c2);
+            if (findAllLines(test).length === 0) {
+                statusDiv.innerHTML = '❌ Так не получится';
+                setTimeout(() => updateStatus(), 1000);
                 return false;
             }
             processingMove = true;
             activeSwap = {
                 fromRow: r1, fromCol: c1, toRow: r2, toCol: c2,
                 fromValue: board[r1][c1].value, toValue: board[r2][c2].value,
-                startTime: performance.now(), duration: SWAP_DURATION
+                startTime: performance.now()
             };
-            startAnimationLoop();
+            startAnimLoop();
             await waitForAnimations();
             swapCells(board, r1,c1, r2,c2);
-            drawBoard(performance.now());
-            await processMatchChain();
+            await processMatches();
             processingMove = false;
-            updateStatusMessage();
+            updateStatus();
             return true;
         }
-        
-        async function tryActivateBonus(row, col) {
+
+        async function activateBonus(row, col) {
             if (processingMove || isPaused) return false;
             const cell = board[row][col];
             if (!cell) return false;
-            if (cell.type === CELL_BOMB) {
-                processingMove = true;
-                await explodeBomb(row, col);
-                processingMove = false;
-                updateStatusMessage();
-                return true;
-            } else if (cell.type === CELL_SUPER) {
-                processingMove = true;
-                await superExplode(row, col);
-                processingMove = false;
-                updateStatusMessage();
-                return true;
-            }
-            return false;
+            processingMove = true;
+            if (cell.type === CELL_BOMB) await explodeBomb(row, col);
+            else if (cell.type === CELL_SUPER) await superExplode(row, col);
+            else { processingMove = false; return false; }
+            processingMove = false;
+            updateStatus();
+            return true;
         }
-        
-        function stabilizeBoardNoBonuses() {
-            let anyMatch = true;
-            while (anyMatch) {
-                const lines = findAllLines(board);
-                if (lines.length === 0) break;
-                const toRemove = new Set();
+
+        function updateStatus() {
+            if (!hasAnyMove(board)) statusDiv.innerHTML = '⚠️ Ходов нет — нажмите 🔄';
+            else statusDiv.innerHTML = '💎 Выбирай камни и меняй местами!';
+        }
+
+        // ---------- ИНИЦИАЛИЗАЦИЯ ----------
+        function initBoard() {
+            board = Array.from({length: ROWS}, () => Array.from({length: COLS}, getRandomGem));
+            // Убираем начальные совпадения без бонусов
+            let lines;
+            while ((lines = findAllLines(board)).length > 0) {
                 for (let line of lines) {
-                    for (let cell of line.cells) toRemove.add(`${cell.r},${cell.c}`);
-                }
-                for (let coord of toRemove) {
-                    let [r,c] = coord.split(',').map(Number);
-                    board[r][c] = null;
-                }
-                for (let c = 0; c < COLS; c++) {
-                    let column = [];
-                    for (let r = 0; r < ROWS; r++) if (board[r][c] !== null) column.push(board[r][c]);
-                    let missing = ROWS - column.length;
-                    for (let i = 0; i < missing; i++) column.unshift(getRandomGem());
-                    for (let r = 0; r < ROWS; r++) board[r][c] = column[r];
+                    for (let cell of line.cells) board[cell.r][cell.c] = getRandomGem();
                 }
             }
         }
-        
-        function initNewGame() {
+
+        function newGame() {
             processingMove = true;
-            board = [];
-            for (let i=0; i<ROWS; i++) {
-                board[i] = [];
-                for (let j=0; j<COLS; j++) board[i][j] = getRandomGem();
-            }
-            stabilizeBoardNoBonuses();
+            initBoard();
             currentScore = 0;
-            scoreSpan.innerText = currentScore;
-            selectedRow = null;
-            selectedCol = null;
+            scoreSpan.innerText = '0';
+            selectedRow = selectedCol = null;
             drawBoard(performance.now());
             processingMove = false;
-            updateStatusMessage();
-            statusDiv.innerHTML = '✨ Новая игра! Удачи ✨';
-            setTimeout(() => updateStatusMessage(), 1500);
+            updateStatus();
         }
-        
-        function shuffleBoard() {
-            if (processingMove || isPaused) return;
-            processingMove = true;
-            for (let i=0; i<ROWS; i++) {
-                for (let j=0; j<COLS; j++) board[i][j] = getRandomGem();
-            }
-            stabilizeBoardNoBonuses();
-            selectedRow = null;
-            selectedCol = null;
-            drawBoard(performance.now());
-            processingMove = false;
-            updateStatusMessage();
-            statusDiv.innerHTML = '🎲 Доска перемешана! Продолжайте игру 🎲';
-            setTimeout(() => updateStatusMessage(), 1800);
-        }
-        
-        function updateStatusMessage() {
-            if (isPaused) {
-                statusDiv.innerHTML = '⏸ ИГРА НА ПАУЗЕ. Нажмите "ПАУЗА" чтобы продолжить ⏸';
-                statusDiv.style.color = '#ffc48a';
-                return;
-            }
-            if (!hasAnyValidMove(board)) {
-                statusDiv.innerHTML = '⚠️ НЕТ ДОСТУПНЫХ ХОДОВ! Нажми "ПЕРЕМЕШАТЬ" ⚠️';
-                statusDiv.style.color = '#ffc48a';
-            } else {
-                statusDiv.innerHTML = '💎 Меняй самоцветы местами — собирай ряды! 💎';
-                statusDiv.style.color = '#ffefc0';
-            }
-        }
-        
-        function getCanvasCoords(e) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            let clientX, clientY;
-            if (e.touches) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-                e.preventDefault();
-            } else {
-                clientX = e.clientX;
-                clientY = e.clientY;
-            }
-            let canvasX = (clientX - rect.left) * scaleX;
-            let canvasY = (clientY - rect.top) * scaleY;
-            canvasX = Math.min(Math.max(0, canvasX), canvas.width-1);
-            canvasY = Math.min(Math.max(0, canvasY), canvas.height-1);
-            const col = Math.floor(canvasX / TILE_SIZE);
-            const row = Math.floor(canvasY / TILE_SIZE);
-            return { row, col };
-        }
-        
-        async function onCanvasTap(e) {
-            if (processingMove || isPaused) {
-                if (isPaused) statusDiv.innerHTML = '⏸ Игра на паузе, снимите паузу чтобы играть ⏸';
-                else statusDiv.innerHTML = '⏳ Анимация... подожди немного ⏳';
-                return;
-            }
+
+        // ---------- ОБРАБОТКА КАСАНИЙ ----------
+        function handleTap(e) {
             e.preventDefault();
-            const { row, col } = getCanvasCoords(e);
-            if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return;
+            if (processingMove || isPaused) return;
+            const rect = canvas.getBoundingClientRect();
+            const scale = canvas.width / rect.width;
+            const x = (e.touches?.[0]?.clientX ?? e.clientX) - rect.left;
+            const y = (e.touches?.[0]?.clientY ?? e.clientY) - rect.top;
+            const col = Math.floor(x * scale / TILE_SIZE);
+            const row = Math.floor(y * scale / TILE_SIZE);
+            if (row<0||row>=ROWS||col<0||col>=COLS) return;
+
             const cell = board[row][col];
             if (selectedRow === null) {
                 if (cell && (cell.type === CELL_BOMB || cell.type === CELL_SUPER)) {
-                    await tryActivateBonus(row, col);
+                    activateBonus(row, col);
                     return;
                 }
-                selectedRow = row;
-                selectedCol = col;
+                selectedRow = row; selectedCol = col;
                 drawBoard(performance.now());
-                statusDiv.innerHTML = `✨ Выбран камень (${row+1},${col+1}). Теперь выбери соседний ✨`;
+                statusDiv.innerHTML = `Выбрано (${row+1},${col+1})`;
                 return;
             }
+
             const sRow = selectedRow, sCol = selectedCol;
-            selectedRow = null;
-            selectedCol = null;
+            selectedRow = selectedCol = null;
             drawBoard(performance.now());
+
             if (sRow === row && sCol === col) {
-                statusDiv.innerHTML = 'Выделение снято';
-                setTimeout(() => updateStatusMessage(), 800);
+                statusDiv.innerHTML = 'Выбор снят';
                 return;
             }
-            const success = await trySwapWithAnimation(sRow, sCol, row, col);
-            if (!success) drawBoard(performance.now());
-            else {
-                drawBoard(performance.now());
-                if (!hasAnyValidMove(board)) {
-                    statusDiv.innerHTML = '⚠️ Ходов больше нет! Нажми "ПЕРЕМЕШАТЬ" ⚠️';
-                } else {
-                    statusDiv.innerHTML = '✅ Удачный ход! + очки! ✅';
-                    setTimeout(() => updateStatusMessage(), 1300);
-                }
-            }
+            trySwap(sRow, sCol, row, col);
         }
-        
-        function resetGame() {
-            if (processingMove) return;
-            initNewGame();
-        }
-        
+
         function togglePause() {
             if (processingMove) return;
             isPaused = !isPaused;
-            pauseBtn.innerHTML = isPaused ? '▶' : '⏸';
-            if (isPaused) {
-                statusDiv.innerHTML = '⏸ ИГРА НА ПАУЗЕ. Нажмите "СТАРТ" чтобы продолжить ⏸';
-                statusDiv.style.color = '#ffc48a';
-            } else {
-                updateStatusMessage();
-            }
+            pauseBtn.textContent = isPaused ? '▶' : '⏸';
+            statusDiv.innerHTML = isPaused ? '⏸ ПАУЗА' : '💎 Игра продолжается';
             drawBoard(performance.now());
         }
-        
-        function attachEvents() {
-            canvas.addEventListener('mousedown', onCanvasTap);
-            canvas.addEventListener('touchstart', onCanvasTap, { passive: false });
-            document.getElementById('resetGameBtn').addEventListener('click', resetGame);
-            document.getElementById('shuffleBtn').addEventListener('click', shuffleBoard);
-            pauseBtn.addEventListener('click', togglePause);
-        }
-        
-        function startGame() {
-            initNewGame();
-            attachEvents();
-            startAnimationLoop();
-        }
-        
-        startGame();
+
+        // ---------- ЗАПУСК ----------
+        canvas.addEventListener('touchstart', handleTap, {passive: false});
+        canvas.addEventListener('mousedown', handleTap);
+        document.getElementById('resetGameBtn').addEventListener('click', () => { if (!processingMove) newGame(); });
+        pauseBtn.addEventListener('click', togglePause);
+
+        newGame();
+        startAnimLoop();
     })();
+    // --- Аудио (заготовка) ---
+let audioEnabled = false;
+let backgroundMusic = null;
+const soundBtn = document.getElementById('soundToggleBtn');
+
+function initAudio() {
+    // Здесь позже будет создание Audio объекта и загрузка файла
+    // backgroundMusic = new Audio('/static/sounds/game_music.mp3');
+    // backgroundMusic.loop = true;
+}
+
+function toggleSound() {
+    audioEnabled = !audioEnabled;
+    soundBtn.innerHTML = audioEnabled ? '🔊 ВКЛ' : '🔈 ВЫКЛ';
+    if (backgroundMusic) {
+        if (audioEnabled) {
+            backgroundMusic.play().catch(e => console.log('Автовоспроизведение заблокировано'));
+        } else {
+            backgroundMusic.pause();
+        }
+    }
+    // Виброотклик (опционально)
+    if (navigator.vibrate) navigator.vibrate(20);
+}
+
+// В обработчике загрузки страницы:
+initAudio();
+soundBtn.addEventListener('click', toggleSound);
 </script>
 </body>
 </html>

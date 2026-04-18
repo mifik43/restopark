@@ -220,6 +220,7 @@
                 <option value="hard">🔥 16x16</option>
             </select>
             <button class="btn restart-btn" id="reset-game">🔄</button>
+            <button class="btn sound-btn" id="soundToggleBtn" title="Включить/выключить звук">🔊 ВКЛ</button>
             <a href="/games" class="btn exit-btn">🚪 ВЫХОД</a>
         </div>
     </div>
@@ -570,6 +571,34 @@
     currentHealth = MAX_HEALTH;
     renderGrid();
     updateUIStats();
+    // --- Аудио (заготовка) ---
+let audioEnabled = false;
+let backgroundMusic = null;
+const soundBtn = document.getElementById('soundToggleBtn');
+
+function initAudio() {
+    // Здесь позже будет создание Audio объекта и загрузка файла
+    // backgroundMusic = new Audio('/static/sounds/game_music.mp3');
+    // backgroundMusic.loop = true;
+}
+
+function toggleSound() {
+    audioEnabled = !audioEnabled;
+    soundBtn.innerHTML = audioEnabled ? '🔊 ВКЛ' : '🔈 ВЫКЛ';
+    if (backgroundMusic) {
+        if (audioEnabled) {
+            backgroundMusic.play().catch(e => console.log('Автовоспроизведение заблокировано'));
+        } else {
+            backgroundMusic.pause();
+        }
+    }
+    // Виброотклик (опционально)
+    if (navigator.vibrate) navigator.vibrate(20);
+}
+
+// В обработчике загрузки страницы:
+initAudio();
+soundBtn.addEventListener('click', toggleSound);
 </script>
 </body>
 </html>

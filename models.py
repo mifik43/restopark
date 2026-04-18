@@ -62,3 +62,14 @@ class MenuItem(db.Model):
             'order': self.order,
             'category_id': self.category_id
         }
+    
+class GameSession(db.Model):
+    __tablename__ = 'game_sessions'
+    id = db.Column(db.Integer, primary_key=True)
+    game_name = db.Column(db.String(50), nullable=False)  # 'racing', 'snake', '3match', ...
+    start_time = db.Column(db.DateTime, default=datetime.utcnow)
+    end_time = db.Column(db.DateTime, nullable=True)
+    duration = db.Column(db.Integer, default=0)  # в секундах
+    completed = db.Column(db.Boolean, default=False)  # доиграл или вышел
+    score = db.Column(db.Integer, default=0)
+    user_agent = db.Column(db.String(200))  # для аналитики устройства

@@ -1566,3 +1566,9 @@ footer {
 .pause-btn { background: radial-gradient(circle at 30% 10%, #7c6e5e, #5c4e3e); box-shadow: 0 6px 0 #3a3028; }
 .restart-btn { background: radial-gradient(circle at 30% 10%, #6e906b, #42633b); box-shadow: 0 6px 0 #2b4a25; }
 .exit-btn { background: radial-gradient(circle at 30% 10%, #4a5a3a, #2e3a22); box-shadow: 0 6px 0 #1f2a14; }
+
+.sound-btn {
+    background: radial-gradient(circle at 30% 10%, #9b8a7a, #6b5a4a);
+    box-shadow: 0 6px 0 #4a3a2a;
+    min-width: 70px;
+}

@@ -258,6 +258,56 @@ def admin_item_delete(id):
     flash('Блюдо удалено', 'success')
     return redirect(url_for('admin_items'))
 
+@app.route('/api/game/start', methods=['POST'])
+def api_game_start():
+    data = request.get_json()
+    game_id = data.get('game_id')
+    if not game_id:
+        return jsonify({'error': 'game_id required'}), 400
+    session = GameSession(game_id=game_id, start_time=datetime.utcnow())
+    db.session.add(session)
+    db.session.commit()
+    return jsonify({'session_id': session.id})
+
+@app.route('/api/game/end', methods=['POST'])
+def api_game_end():
+    data = request.get_json()
+    session_id = data.get('session_id')
+    if not session_id:
+        return jsonify({'error': 'session_id required'}), 400
+    session = GameSession.query.get(session_id)
+    if session and not session.end_time:
+        session.end_time = datetime.utcnow()
+        db.session.commit()
+    return jsonify({'status': 'ok'})
+
+@app.route('/api/game/stats')
+@admin_required
+def game_stats():
+    from sqlalchemy import func
+    today = datetime.utcnow().date()
+    week_ago = today - timedelta(days=7)
+    month_ago = today - timedelta(days=30)
+    year_ago = today - timedelta(days=365)
+
+    stats = {}
+    games = db.session.query(GameSession.game_name).distinct()
+    for (game,) in games:
+        base_q = GameSession.query.filter_by(game_name=game)
+        stats[game] = {
+            'today': base_q.filter(func.date(GameSession.start_time) == today).count(),
+            'week': base_q.filter(GameSession.start_time >= week_ago).count(),
+            'month': base_q.filter(GameSession.start_time >= month_ago).count(),
+            'year': base_q.filter(GameSession.start_time >= year_ago).count(),
+            'avg_duration': base_q.filter(GameSession.duration > 0).with_entities(func.avg(GameSession.duration)).scalar() or 0
+        }
+    return jsonify(stats)
+
+@app.route('/admin/stats')
+@admin_required
+def admin_stats():
+    return render_template('admin/stats.html')
+
 # ---------- Инициализация БД ----------
 @app.cli.command('init-db')
 def init_db():

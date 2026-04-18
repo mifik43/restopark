@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Побег Скандика · 3D (улучшенная)</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; touch-action: none; background: #0a0f1a; }
+        #leftPanel { position: absolute; top: 20px; left: 20px; display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.5); padding: 12px 20px; border-radius: 50px; backdrop-filter: blur(5px); color: white; font-size: clamp(16px, 4vw, 32px); font-weight: bold; border: 2px solid #ffaa00; z-index: 10; }
+        #leftPanel > div { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+        #skandiCounter { color: #ffd966; } #coinCounter { color: #ffaa00; }
+        #rightPanel { position: absolute; top: 90px; right: 20px; display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.5); padding: 12px 20px; border-radius: 50px; backdrop-filter: blur(5px); color: #b3d0ff; font-size: clamp(14px, 3vw, 24px); border: 2px solid #3a6ea5; z-index: 10; }
+        .timerItem { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        #burgerIcon { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); border: 2px solid #9f7aea; border-radius: 50px; width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; font-size: 40px; color: white; cursor: pointer; z-index: 12; }
+        #burgerPanel { position: absolute; top: 90px; right: 20px; background: rgba(20,20,40,0.98); backdrop-filter: blur(10px); border: 2px solid #9f7aea; border-radius: 30px; padding: 20px; display: none; flex-direction: column; gap: 15px; z-index: 13; min-width: 250px; transform: scale(0.95); opacity: 0; pointer-events: none; transition: 0.2s; }
+        #burgerPanel.show { display: flex; transform: scale(1); opacity: 1; pointer-events: auto; }
+        .burgerBtn { background: #4a5568; border: none; color: white; font-size: 24px; font-weight: bold; padding: 15px 20px; border-radius: 60px; cursor: pointer; box-shadow: 0 6px 0 #2d3748; transition: 0.1s; border: 2px solid #cbd5e0; text-align: center; }
+        .burgerBtn:active { transform: translateY(6px); box-shadow: none; }
+        .restartBtn { background: #e94f4f; box-shadow: 0 6px 0 #9b2c2c; border: 2px solid #ffbaba; }
+        .hintSection { background: #2d3748; border-radius: 30px; padding: 15px; color: white; font-size: 18px; line-height: 1.6; }
+        .hintSection kbd { background: #1a202c; border-radius: 8px; padding: 4px 10px; color: #ffd966; font-weight: bold; }
+        #pauseOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); display: none; justify-content: center; align-items: center; z-index: 11; pointer-events: none; }
+        #pauseText { background: rgba(0,0,0,0.7); color: white; font-size: clamp(40px, 10vw, 80px); font-weight: bold; padding: 20px 50px; border-radius: 60px; border: 4px solid #ffaa00; }
+        #gameOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 20; color: white; font-size: 64px; font-weight: bold; }
+        #gameOverlay button { margin-top: 30px; background: #f6ad55; border: none; font-size: 40px; padding: 20px 50px; border-radius: 80px; cursor: pointer; box-shadow: 0 10px 0 #b7791f; }
+        .sound-btn { background: #7c6e5e; box-shadow: 0 6px 0 #5c4e3e; }
+    </style>
+    <script type="importmap">{{"imports": {"three": "https://unpkg.com/three@0.128.0/build/three.module.js"}}}</script>
+</head>
+<body>
+<div id="leftPanel">
+    <div><span>🍽️</span> <span id="skandiCounter">0</span></div>
+    <div><span>🪙</span> <span id="coinCounter">0</span></div>
+    <div><span>⚡</span> <span id="scoreSpan">0</span></div>
+</div>
+<div id="burgerIcon">☰</div>
+<div id="burgerPanel">
+    <button class="burgerBtn restartBtn" id="restartBtnBurger">🔄 СБЕЖАТЬ</button>
+    <button class="burgerBtn sound-btn" id="soundToggleBtn">🔊 ВКЛ</button>
+    <button class="burgerBtn" id="exitBtn">🚪 ВЫХОД</button>
+    <div class="hintSection">
+        <div><kbd>←</kbd> <kbd>→</kbd> — полосы</div>
+        <div><kbd>↑</kbd> — прыжок · <kbd>↓</kbd> — скольжение</div>
+        <div class="swipeHint">👆 свайп вверх/вниз · 👉👈 свайп вправо/влево</div>
+    </div>
+</div>
+<div id="rightPanel">
+    <div class="timerItem" id="jumpTimer" style="display: none;">👟<span id="jumpTime">0</span></div>
+    <div class="timerItem" id="flyTimer" style="display: none;">🍕<span id="flyTime">0</span></div>
+    <div class="timerItem" id="shieldTimer" style="display: none;">🛡️<span id="shieldCount">0</span></div>
+</div>
+<div id="pauseOverlay"><div id="pauseText">ПАУЗА</div></div>
+<div id="gameOverlay"><div>GAME OVER</div><button onclick="location.reload()">ИГРАТЬ СНОВА</button></div>
+
+<script type="module">
+    import * as THREE from 'three';
+
+    // ==================== КОНФИГУРАЦИЯ (редактируемые параметры) ====================
+    const GAME_CONFIG = {
+        // Скорость и сложность
+        INITIAL_SPEED: 0.45,
+        SPEED_INCREMENT: 0.12,
+        SPEED_INCREMENT_INTERVAL: 1800,  // кадров (~30 сек при 60 fps)
+        MAX_SPEED: 2.2,
+        SPAWN_Z: 120,
+        DESPAWN_Z: -30,
+        FOG_NEAR: 30,
+        FOG_FAR: 150,
+        SPAWN_INTERVAL: 28,
+        // Шансы генерации (сумма ≤ 1)
+        CHANCE_OBSTACLE: 0.30,
+        CHANCE_COIN: 0.25,
+        CHANCE_SHOES: 0.12,
+        CHANCE_PIZZA: 0.12,
+        CHANCE_FRIES: 0.10,
+        // Длительности бонусов (в кадрах, 60 fps)
+        DURATION_SHOES: 300,
+        DURATION_PIZZA: 600,
+        SHIELD_FRIES: 3,
+        SPEED_BOOST_SHOES: 0.5,
+        JUMP_FORCE_NORMAL: 0.95,
+        JUMP_FORCE_SUPER: 1.35,
+        SNAKE_COIN_INTERVAL: 12,
+        SNAKE_PATTERN: [0, 1, 2, 1, 0, 1, 2, 1, 0],
+        BONUS_COLLECT_RADIUS: 4.5,
+        SWIPE_INVERT: true,
+    };
+
+    // ==================== СКИНЫ ПЕРСОНАЖА (добавлять здесь) ====================
+    const PLAYER_SKINS = {
+        default: {
+            bodyColor: 0x3d94ff, headColor: 0xff6f4a, visorColor: 0x2b1e10,
+            backpackColor: 0xe67e22, eyeColor: 0xffffff, pupilColor: 0x000000
+        },
+        dark: {
+            bodyColor: 0x2c3e50, headColor: 0xe67e22, visorColor: 0x1a1a1a,
+            backpackColor: 0x8e44ad, eyeColor: 0xecf0f1, pupilColor: 0x2c3e50
+        },
+        neon: {
+            bodyColor: 0xff00ff, headColor: 0x00ffff, visorColor: 0x222222,
+            backpackColor: 0xffff00, eyeColor: 0xffffff, pupilColor: 0xff0000
+        }
+    };
+    const CURRENT_SKIN = PLAYER_SKINS.default;  // <-- изменить скин здесь
+
+    // ==================== ВИДЫ ПРЕПЯТСТВИЙ (цвета и размеры) ====================
+    const OBSTACLE_TYPES = [
+        { color: 0xb03a2e, emissive: 0x3a0f0a, height: 3.0, yOffset: 4.0 }, // низкое (прыжок)
+        { color: 0x9b59b6, emissive: 0x2c0e3a, height: 3.5, yOffset: 4.5 }, // среднее (супер-прыжок)
+        { color: 0xe67e22, emissive: 0x5a2e0a, height: 4.0, yOffset: 7.5 }  // высокое (скольжение)
+    ];
+
+    // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
+    const LANES = [-8, 0, 8];
+    const GROUND_Y = 2;
+    const CLOUD_Y = 14;
+    const FLY_Y = 20;
+    const PLAYER_WIDTH = 1.8, PLAYER_HEIGHT = 2.5, PLAYER_DEPTH = 1.5;
+
+    let gamePaused = false, gameOver = false;
+    let frame = 0, baseSpeed = GAME_CONFIG.INITIAL_SPEED, currentSpeed = baseSpeed;
+    let totalCoins = 0, score = 0;
+    let powerupTimers = { jump: 0, fly: 0, shield: 0 };
+    let playerGroup;
+    let obstacles = [], groundCoins = [], powerups = [], flyCoins = [];
+    let trees = [], clouds = [];
+    let playerState = { lane: 1, targetX: LANES[1], isJumping: false, isSliding: false, jumpVel: 0, slideTimer: 0, baseY: GROUND_Y };
+    let snakePatternIndex = 0, snakeCounter = 0;
+
+    // Звук (заготовка)
+    let audioEnabled = true;
+    let backgroundMusic = null; // например, new Audio('/static/sounds/theme.mp3')
+    const soundBtn = document.getElementById('soundToggleBtn');
+
+    // UI элементы
+    const skandiSpan = document.getElementById('skandiCounter'), coinSpan = document.getElementById('coinCounter'), scoreSpan = document.getElementById('scoreSpan');
+    const jumpTimerDiv = document.getElementById('jumpTimer'), flyTimerDiv = document.getElementById('flyTimer'), shieldTimerDiv = document.getElementById('shieldTimer');
+    const jumpTimeSpan = document.getElementById('jumpTime'), flyTimeSpan = document.getElementById('flyTime'), shieldCountSpan = document.getElementById('shieldCount');
+    const pauseOverlay = document.getElementById('pauseOverlay'), burgerPanel = document.getElementById('burgerPanel'), burgerIcon = document.getElementById('burgerIcon');
+    const gameOverlay = document.getElementById('gameOverlay');
+
+    // ==================== ИНИЦИАЛИЗАЦИЯ THREE.JS ====================
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0f1a);
+    scene.fog = new THREE.Fog(0x0a0f1a, GAME_CONFIG.FOG_NEAR, GAME_CONFIG.FOG_FAR);
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 15, 25);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    // Освещение
+    const ambientLight = new THREE.AmbientLight(0x404060);
+    scene.add(ambientLight);
+    const sunLight = new THREE.DirectionalLight(0xffeedd, 1.2);
+    sunLight.castShadow = true; sunLight.receiveShadow = true;
+    sunLight.shadow.mapSize.width = 1024; sunLight.shadow.mapSize.height = 1024;
+    const d = 25;
+    sunLight.shadow.camera.left = -d; sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d; sunLight.shadow.camera.bottom = -d;
+    sunLight.shadow.camera.near = 1; sunLight.shadow.camera.far = 50;
+    sunLight.position.set(10, 30, 20);
+    scene.add(sunLight);
+
+    const fillLight = new THREE.PointLight(0x4466aa, 0.4);
+    fillLight.position.set(-10, 20, 30);
+    scene.add(fillLight);
+
+    // ==================== СОЗДАНИЕ ИГРОКА (с выбранным скином) ====================
+    function createPlayer() {
+        const group = new THREE.Group();
+        const skin = CURRENT_SKIN;
+
+        const body = new THREE.Mesh(new THREE.BoxGeometry(PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_DEPTH),
+            new THREE.MeshStandardMaterial({ color: skin.bodyColor, emissive: 0x1a3a5a }));
+        body.castShadow = true; body.receiveShadow = true;
+        body.position.y = PLAYER_HEIGHT/2;
+        group.add(body);
+
+        const head = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1, 1.2), new THREE.MeshStandardMaterial({ color: skin.headColor }));
+        head.castShadow = true; head.receiveShadow = true;
+        head.position.set(0, PLAYER_HEIGHT + 0.3, 0);
+        group.add(head);
+
+        const visor = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.2, 1.3), new THREE.MeshStandardMaterial({ color: skin.visorColor }));
+        visor.castShadow = true; visor.receiveShadow = true;
+        visor.position.set(0.5, PLAYER_HEIGHT + 0.2, 0);
+        group.add(visor);
+
+        const eyeGeo = new THREE.SphereGeometry(0.3), pupilGeo = new THREE.SphereGeometry(0.15);
+        const eyeMat = new THREE.MeshStandardMaterial({ color: skin.eyeColor }), pupilMat = new THREE.MeshStandardMaterial({ color: skin.pupilColor });
+        const eyeL = new THREE.Mesh(eyeGeo, eyeMat); eyeL.position.set(-0.5, PLAYER_HEIGHT - 0.2, 0.8); group.add(eyeL);
+        const pupilL = new THREE.Mesh(pupilGeo, pupilMat); pupilL.position.set(-0.5, PLAYER_HEIGHT - 0.2, 1.0); group.add(pupilL);
+        const eyeR = new THREE.Mesh(eyeGeo, eyeMat); eyeR.position.set(0.5, PLAYER_HEIGHT - 0.2, 0.8); group.add(eyeR);
+        const pupilR = new THREE.Mesh(pupilGeo, pupilMat); pupilR.position.set(0.5, PLAYER_HEIGHT - 0.2, 1.0); group.add(pupilR);
+
+        const backpack = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.0, 0.8), new THREE.MeshStandardMaterial({ color: skin.backpackColor }));
+        backpack.castShadow = true; backpack.receiveShadow = true;
+        backpack.position.set(-0.2, PLAYER_HEIGHT/2, -PLAYER_DEPTH/2 - 0.3);
+        group.add(backpack);
+
+        return group;
+    }
+
+    playerGroup = createPlayer();
+    playerGroup.position.set(LANES[1], GROUND_Y, 10);
+    playerGroup.castShadow = true; playerGroup.receiveShadow = true;
+    scene.add(playerGroup);
+
+    // ==================== ОКРУЖЕНИЕ ====================
+    function buildEnvironment() {
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x2a3f5e });
+        const stripMat = new THREE.MeshStandardMaterial({ color: 0x5a8fd8 });
+        for (let i = -1; i <= 1; i++) {
+            const x = i * 8;
+            const plane = new THREE.Mesh(new THREE.BoxGeometry(6, 0.5, 200), groundMat);
+            plane.position.set(x, -0.25, 0);
+            plane.receiveShadow = true;
+            scene.add(plane);
+            if (i < 1) {
+                const line = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.2, 200), stripMat);
+                line.position.set(x + 4, 0.1, 0);
+                line.receiveShadow = true;
+                scene.add(line);
+            }
+        }
+        // Деревья и облака создаются динамически в updateWorld
+    }
+    buildEnvironment();
+
+    // ==================== ГЕНЕРАЦИЯ ОБЪЕКТОВ ====================
+    function generateObstacle(lane, startZ) {
+        const typeIdx = Math.floor(Math.random() * OBSTACLE_TYPES.length);
+        const type = OBSTACLE_TYPES[typeIdx];
+        const xPos = LANES[lane];
+        const obs = new THREE.Mesh(new THREE.BoxGeometry(3, type.height, 3),
+            new THREE.MeshStandardMaterial({ color: type.color, emissive: type.emissive }));
+        obs.castShadow = true; obs.receiveShadow = true;
+        obs.position.set(xPos, type.yOffset, startZ);
+        scene.add(obs);
+        obstacles.push({ mesh: obs, lane, typeIdx });
+    }
+
+    function generateItem(lane, startZ, type) {
+        const xPos = LANES[lane];
+        if (type === 'coin') {
+            const coin = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.3, 16, 32), new THREE.MeshStandardMaterial({ color: 0xffd966, emissive: 0x664d00 }));
+            coin.castShadow = true; coin.receiveShadow = true;
+            coin.position.set(xPos, 2.0, startZ);
+            coin.rotation.x = Math.PI / 2;
+            scene.add(coin);
+            groundCoins.push({ mesh: coin, lane, collected: false });
+        } else if (type === 'shoes') {
+            const group = new THREE.Group();
+            const sole = new THREE.Mesh(new THREE.BoxGeometry(2, 0.5, 1.5), new THREE.MeshStandardMaterial({ color: 0x4d9fff }));
+            sole.position.y = 0.25; group.add(sole);
+            const top = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1, 1.2), new THREE.MeshStandardMaterial({ color: 0x2a6bb0 }));
+            top.position.set(0, 1, 0); group.add(top);
+            group.position.set(xPos, 1.5, startZ);
+            group.castShadow = true; group.receiveShadow = true;
+            scene.add(group);
+            powerups.push({ mesh: group, lane, type: 'shoes', collected: false });
+        } else if (type === 'pizza') {
+            const pizza = new THREE.Mesh(new THREE.ConeGeometry(1.5, 0.5, 8), new THREE.MeshStandardMaterial({ color: 0xe67e22 }));
+            pizza.castShadow = true; pizza.receiveShadow = true;
+            pizza.position.set(xPos, 1.5, startZ); pizza.rotation.y = Math.PI/4;
+            scene.add(pizza);
+            powerups.push({ mesh: pizza, lane, type: 'pizza', collected: false });
+        } else if (type === 'fries') {
+            const group = new THREE.Group();
+            const fryMat = new THREE.MeshStandardMaterial({ color: 0xf7b731 });
+            for (let i=0; i<5; i++) {
+                const fry = new THREE.Mesh(new THREE.BoxGeometry(0.5, 2, 0.5), fryMat);
+                fry.position.set((i-2)*0.8, 1, 0); fry.castShadow = true;
+                group.add(fry);
+            }
+            group.position.set(xPos, 1.5, startZ);
+            scene.add(group);
+            powerups.push({ mesh: group, lane, type: 'fries', collected: false });
+        }
+    }
+
+    function generateWorld() {
+        if (gamePaused || gameOver) return;
+        if (frame % GAME_CONFIG.SPAWN_INTERVAL === 0) {
+            const r = Math.random();
+            const lane = Math.floor(Math.random() * 3);
+            const startZ = GAME_CONFIG.SPAWN_Z;
+
+            let cumulative = 0;
+            if (r < (cumulative += GAME_CONFIG.CHANCE_OBSTACLE)) generateObstacle(lane, startZ);
+            else if (r < (cumulative += GAME_CONFIG.CHANCE_COIN)) generateItem(lane, startZ, 'coin');
+            else if (r < (cumulative += GAME_CONFIG.CHANCE_SHOES)) generateItem(lane, startZ, 'shoes');
+            else if (r < (cumulative += GAME_CONFIG.CHANCE_PIZZA)) generateItem(lane, startZ, 'pizza');
+            else if (r < (cumulative += GAME_CONFIG.CHANCE_FRIES)) generateItem(lane, startZ, 'fries');
+        }
+    }
+
+    function generateSnakeCoins() {
+        if (gamePaused || gameOver || powerupTimers.fly <= 0) return;
+        snakeCounter++;
+        if (snakeCounter >= GAME_CONFIG.SNAKE_COIN_INTERVAL) {
+            snakeCounter = 0;
+            const laneIndex = GAME_CONFIG.SNAKE_PATTERN[snakePatternIndex % GAME_CONFIG.SNAKE_PATTERN.length];
+            snakePatternIndex++;
+            const xPos = LANES[laneIndex];
+            const startZ = GAME_CONFIG.SPAWN_Z;
+            const coin = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.25, 16, 32), new THREE.MeshStandardMaterial({ color: 0xffaa00, emissive: 0x442200 }));
+            coin.castShadow = true; coin.receiveShadow = true;
+            coin.position.set(xPos, FLY_Y, startZ);
+            coin.rotation.x = Math.PI / 2;
+            scene.add(coin);
+            flyCoins.push({ mesh: coin, lane: laneIndex, collected: false });
+        }
+    }
+
+    // ==================== ОБНОВЛЕНИЕ МИРА ====================
+    function updateWorld() {
+        if (gamePaused || gameOver) return;
+
+        // Увеличение скорости
+        if (frame % GAME_CONFIG.SPEED_INCREMENT_INTERVAL === 0 && baseSpeed < GAME_CONFIG.MAX_SPEED) {
+            baseSpeed = Math.min(baseSpeed + GAME_CONFIG.SPEED_INCREMENT, GAME_CONFIG.MAX_SPEED);
+        }
+        currentSpeed = baseSpeed + (powerupTimers.jump > 0 ? GAME_CONFIG.SPEED_BOOST_SHOES : 0);
+
+        // Движение объектов
+        const allObjects = [...obstacles, ...groundCoins, ...powerups, ...flyCoins];
+        allObjects.forEach(obj => obj.mesh.position.z -= currentSpeed);
+        trees.forEach(t => t.position.z -= currentSpeed);
+        clouds.forEach(c => c.position.z -= currentSpeed);
+
+        // Удаление устаревших
+        obstacles = obstacles.filter(o => { if (o.mesh.position.z < GAME_CONFIG.DESPAWN_Z) { scene.remove(o.mesh); return false; } return true; });
+        groundCoins = groundCoins.filter(c => { if (c.collected || c.mesh.position.z < GAME_CONFIG.DESPAWN_Z) { scene.remove(c.mesh); return false; } return true; });
+        powerups = powerups.filter(p => { if (p.collected || p.mesh.position.z < GAME_CONFIG.DESPAWN_Z) { scene.remove(p.mesh); return false; } return true; });
+        flyCoins = flyCoins.filter(c => { if (c.collected || c.mesh.position.z < GAME_CONFIG.DESPAWN_Z) { scene.remove(c.mesh); return false; } return true; });
+
+        // Перемещение деревьев и облаков для бесконечности
+        trees.forEach(tree => { if (tree.position.z < GAME_CONFIG.DESPAWN_Z - 10) { tree.position.z = GAME_CONFIG.SPAWN_Z + 20; tree.position.x = (tree.position.x > 0 ? 20 : -20) + (Math.random()-0.5)*10; }});
+        clouds.forEach(cloud => { if (cloud.position.z < GAME_CONFIG.DESPAWN_Z - 10) { cloud.position.z = GAME_CONFIG.SPAWN_Z + 30; cloud.position.x = -15 + Math.random()*30; }});
+
+        // Таймеры бонусов
+        if (powerupTimers.jump > 0) powerupTimers.jump--;
+        if (powerupTimers.fly > 0) powerupTimers.fly--;
+
+        // Обновление UI таймеров
+        jumpTimerDiv.style.display = powerupTimers.jump > 0 ? 'flex' : 'none';
+        flyTimerDiv.style.display = powerupTimers.fly > 0 ? 'flex' : 'none';
+        shieldTimerDiv.style.display = powerupTimers.shield > 0 ? 'flex' : 'none';
+        if (powerupTimers.jump > 0) jumpTimeSpan.textContent = (powerupTimers.jump / 60).toFixed(1);
+        if (powerupTimers.fly > 0) flyTimeSpan.textContent = (powerupTimers.fly / 60).toFixed(1);
+        if (powerupTimers.shield > 0) shieldCountSpan.textContent = powerupTimers.shield;
+    }
+
+    // ==================== ФИЗИКА ИГРОКА ====================
+    function updatePlayer() {
+        if (gamePaused || gameOver) return;
+        playerGroup.position.x += (playerState.targetX - playerGroup.position.x) * 0.2;
+
+        if (powerupTimers.fly > 0) {
+            playerGroup.position.y = FLY_Y;
+            playerState.isJumping = false;
+            playerState.jumpVel = 0;
+            playerState.isSliding = false;
+            playerGroup.scale.y = 1;
+        } else {
+            if (playerState.isJumping) {
+                playerGroup.position.y += playerState.jumpVel;
+                playerState.jumpVel -= 0.15;
+                if (playerGroup.position.y <= GROUND_Y) {
+                    playerGroup.position.y = GROUND_Y;
+                    playerState.isJumping = false;
+                    playerState.jumpVel = 0;
+                }
+            }
+            if (playerState.isSliding) {
+                playerState.slideTimer--;
+                if (playerState.slideTimer <= 0) {
+                    playerState.isSliding = false;
+                    playerGroup.scale.y = 1;
+                } else {
+                    playerGroup.scale.y = 0.5;
+                }
+            } else {
+                playerGroup.scale.y = 1;
+            }
+            if (!playerState.isJumping && !playerState.isSliding) {
+                playerGroup.position.y = GROUND_Y;
+            }
+        }
+        score++;
+        updateCounters();
+    }
+
+    // ==================== КОЛЛИЗИИ ====================
+    function checkCollisions() {
+        if (gamePaused || gameOver) return;
+        const playerBox = new THREE.Box3().setFromObject(playerGroup);
+
+        // Препятствия (только если не в полёте)
+        if (powerupTimers.fly === 0) {
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                const obsBox = new THREE.Box3().setFromObject(obs.mesh);
+                if (playerBox.intersectsBox(obsBox)) {
+                    if (powerupTimers.shield > 0) {
+                        powerupTimers.shield--;
+                        scene.remove(obs.mesh);
+                        obstacles.splice(i, 1);
+                        continue;
+                    }
+                    gameOver = true;
+                    gameOverlay.style.display = 'flex';
+                    break;
+                }
+            }
+        }
+
+        // Монеты на земле
+        if (powerupTimers.fly === 0) {
+            groundCoins.forEach(coin => {
+                if (!coin.collected && playerBox.intersectsBox(new THREE.Box3().setFromObject(coin.mesh))) {
+                    coin.collected = true;
+                    scene.remove(coin.mesh);
+                    totalCoins++;
+                    saveCoins();
+                }
+            });
+        }
+
+        // Монеты в воздухе (полёт)
+        if (powerupTimers.fly > 0) {
+            flyCoins.forEach(coin => {
+                if (!coin.collected && playerBox.intersectsBox(new THREE.Box3().setFromObject(coin.mesh))) {
+                    coin.collected = true;
+                    scene.remove(coin.mesh);
+                    totalCoins++;
+                    saveCoins();
+                }
+            });
+        }
+
+        // Бонусы
+        powerups.forEach(p => {
+            if (!p.collected && playerBox.intersectsBox(new THREE.Box3().setFromObject(p.mesh))) {
+                p.collected = true;
+                scene.remove(p.mesh);
+                switch (p.type) {
+                    case 'shoes': powerupTimers.jump = GAME_CONFIG.DURATION_SHOES; break;
+                    case 'pizza': powerupTimers.fly = GAME_CONFIG.DURATION_PIZZA; playerGroup.position.y = FLY_Y; snakePatternIndex = 0; snakeCounter = 0; break;
+                    case 'fries': powerupTimers.shield = GAME_CONFIG.SHIELD_FRIES; break;
+                }
+            }
+        });
+    }
+
+    // ==================== УПРАВЛЕНИЕ ====================
+    function handleJump() {
+        if (gamePaused || gameOver) return;
+        if (powerupTimers.fly === 0 && !playerState.isJumping && !playerState.isSliding && playerGroup.position.y <= GROUND_Y + 0.1) {
+            playerState.isJumping = true;
+            playerState.jumpVel = (powerupTimers.jump > 0) ? GAME_CONFIG.JUMP_FORCE_SUPER : GAME_CONFIG.JUMP_FORCE_NORMAL;
+        }
+    }
+
+    window.addEventListener('keydown', e => {
+        if (e.key.startsWith('Arrow')) e.preventDefault();
+        if (gamePaused || gameOver) return;
+        switch(e.key) {
+            case 'ArrowLeft': if (playerState.lane > 0) { playerState.lane--; playerState.targetX = LANES[playerState.lane]; } break;
+            case 'ArrowRight': if (playerState.lane < 2) { playerState.lane++; playerState.targetX = LANES[playerState.lane]; } break;
+            case 'ArrowUp': handleJump(); break;
+            case 'ArrowDown': if (powerupTimers.fly === 0 && !playerState.isSliding && !playerState.isJumping) { playerState.isSliding = true; playerState.slideTimer = 30; } break;
+        }
+    });
+
+    let touchStart = { x: 0, y: 0 };
+    window.addEventListener('touchstart', e => { touchStart.x = e.touches[0].clientX; touchStart.y = e.touches[0].clientY; });
+    window.addEventListener('touchend', e => {
+        if (gamePaused || gameOver) return;
+        const dx = e.changedTouches[0].clientX - touchStart.x;
+        const dy = e.changedTouches[0].clientY - touchStart.y;
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+            if (GAME_CONFIG.SWIPE_INVERT) {
+                if (dx > 0 && playerState.lane > 0) { playerState.lane--; playerState.targetX = LANES[playerState.lane]; }
+                else if (dx < 0 && playerState.lane < 2) { playerState.lane++; playerState.targetX = LANES[playerState.lane]; }
+            } else {
+                if (dx > 0 && playerState.lane < 2) { playerState.lane++; playerState.targetX = LANES[playerState.lane]; }
+                else if (dx < 0 && playerState.lane > 0) { playerState.lane--; playerState.targetX = LANES[playerState.lane]; }
+            }
+        } else if (Math.abs(dy) > 50) {
+            if (dy < 0) handleJump();
+            else if (powerupTimers.fly === 0 && !playerState.isSliding && !playerState.isJumping) { playerState.isSliding = true; playerState.slideTimer = 30; }
+        } else {
+            handleJump();
+        }
+    });
+
+    // ==================== UI И ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+    function updateCounters() {
+        skandiSpan.textContent = Math.floor(totalCoins / 100);
+        coinSpan.textContent = totalCoins;
+        scoreSpan.textContent = Math.floor(score / 10);
+    }
+
+    function loadCoins() {
+        try { totalCoins = parseInt(localStorage.getItem('totalSkandiCoins')) || 0; } catch(e) { totalCoins = 0; }
+        updateCounters();
+    }
+
+    function saveCoins() {
+        try { localStorage.setItem('totalSkandiCoins', totalCoins); } catch(e) {}
+        updateCounters();
+    }
+
+    function togglePause(show) {
+        gamePaused = show;
+        pauseOverlay.style.display = show ? 'flex' : 'none';
+    }
+
+    function restartGame() {
+        totalCoins = 0; saveCoins(); location.reload();
+    }
+
+    // Звук
+    function toggleSound() {
+        audioEnabled = !audioEnabled;
+        soundBtn.textContent = audioEnabled ? '🔊 ВКЛ' : '🔈 ВЫКЛ';
+        if (backgroundMusic) {
+            if (audioEnabled) backgroundMusic.play().catch(()=>{});
+            else backgroundMusic.pause();
+        }
+    }
+
+    // Инициализация деревьев и облаков
+    function initScenery() {
+        for (let z = -40; z < 60; z += 8) {
+            const treeGroup = new THREE.Group();
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 3), new THREE.MeshStandardMaterial({ color: 0x8b5a2b }));
+            trunk.position.y = 1.5; trunk.castShadow = true; trunk.receiveShadow = true;
+            treeGroup.add(trunk);
+            const leafMat = new THREE.MeshStandardMaterial({ color: 0x3a7d34 });
+            const leaf1 = new THREE.Mesh(new THREE.ConeGeometry(1.2, 2, 8), leafMat);
+            leaf1.position.y = 3; leaf1.castShadow = true; leaf1.receiveShadow = true;
+            treeGroup.add(leaf1);
+            const leaf2 = new THREE.Mesh(new THREE.ConeGeometry(0.9, 1.5, 8), leafMat);
+            leaf2.position.y = 4.2; leaf2.castShadow = true; leaf2.receiveShadow = true;
+            treeGroup.add(leaf2);
+            treeGroup.position.set(-20 + Math.random()*40, 0, z);
+            scene.add(treeGroup);
+            trees.push(treeGroup);
+        }
+        for (let z = -50; z < 80; z += 15) {
+            const cloudGroup = new THREE.Group();
+            const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 });
+            const p1 = new THREE.Mesh(new THREE.SphereGeometry(1.2), cloudMat); p1.position.set(0,0,0); cloudGroup.add(p1);
+            const p2 = new THREE.Mesh(new THREE.SphereGeometry(0.9), cloudMat); p2.position.set(1.5,0.3,-0.5); cloudGroup.add(p2);
+            const p3 = new THREE.Mesh(new THREE.SphereGeometry(0.8), cloudMat); p3.position.set(-1.5,0.2,0.3); cloudGroup.add(p3);
+            cloudGroup.position.set(-15 + Math.random()*30, CLOUD_Y, z);
+            scene.add(cloudGroup);
+            clouds.push(cloudGroup);
+        }
+    }
+
+    // ==================== ЗАПУСК ====================
+    loadCoins();
+    initScenery();
+
+    burgerIcon.addEventListener('click', () => {
+        if (burgerPanel.classList.contains('show')) { burgerPanel.classList.remove('show'); togglePause(false); }
+        else { burgerPanel.classList.add('show'); togglePause(true); }
+    });
+    document.addEventListener('click', e => { if (!burgerPanel.contains(e.target) && !burgerIcon.contains(e.target)) { burgerPanel.classList.remove('show'); togglePause(false); }});
+    document.getElementById('restartBtnBurger').addEventListener('click', restartGame);
+    document.getElementById('exitBtn').addEventListener('click', () => window.location.href = '/games');
+    soundBtn.addEventListener('click', toggleSound);
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+        requestAnimationFrame(animate);
+        if (!gameOver) {
+            if (!gamePaused) {
+                frame++;
+                generateWorld();
+                generateSnakeCoins();
+                updateWorld();
+                updatePlayer();
+                checkCollisions();
+            }
+            camera.position.x = playerGroup.position.x;
+            camera.position.z = playerGroup.position.z - 15;
+            camera.position.y = playerGroup.position.y + 8;
+            camera.lookAt(playerGroup.position.x, playerGroup.position.y + 2, playerGroup.position.z + 10);
+        }
+        renderer.render(scene, camera);
+    }
+    animate();
+</script>
+</body>
+</html>
