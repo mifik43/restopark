@@ -10,9 +10,14 @@ let currentSubgroupId = null;
 
 // ---------- Загрузка данных с сервера ----------
 async function loadMenuData() {
+    const cityId = localStorage.getItem('selectedCityId');
+    if (!cityId) return; // страница-заглушка уже показана
     try {
-        const response = await fetch('/api/categories');
+        const response = await fetch(`/api/categories?city_id=${cityId}`);
         const categories = await response.json();
+        } catch(error) {
+        console.error(error);
+    }
 
         // Построение структуры menuData
         menuData = {};
@@ -25,6 +30,8 @@ async function loadMenuData() {
                 items: cat.items || [],
                 subgroups: {}
             };
+            
+            
         });
 
         // Распределяем подкатегории по родителям
@@ -446,6 +453,11 @@ function updateAddToCartButton(itemId) {
 
 function saveCartToLocalStorage() {
     localStorage.setItem('cart', JSON.stringify(cart));
+    const cityId = localStorage.getItem('selectedCityId');
+    if (!cityId) {
+        document.body.innerHTML = '<div style="text-align:center;padding:100px;"><h1>Устройство не настроено</h1><p>Обратитесь к администратору</p></div>';
+        throw new Error('No city selected');
+    }
 }
 
 function renderCartItems() {
@@ -484,6 +496,23 @@ function renderCartItems() {
     container.querySelectorAll('.decrease').forEach(b => b.addEventListener('click', () => updateQuantity(parseInt(b.dataset.id), -1)));
     container.querySelectorAll('.increase').forEach(b => b.addEventListener('click', () => updateQuantity(parseInt(b.dataset.id), 1)));
     container.querySelectorAll('.remove-item').forEach(b => b.addEventListener('click', () => removeFromCart(parseInt(b.dataset.id))));
+
+cartItems.innerHTML = itemsHTML;
+cartTotal.textContent = total;
+
+// Добавляем выбор времени подачи и кнопку
+const footer = document.createElement('div');
+footer.className = 'cart-footer';
+footer.innerHTML = `
+    <div class="serve-time">
+        <label><input type="radio" name="serveTime" value="now" checked> Подать сейчас</label>
+        <label><input type="radio" name="serveTime" value="later"> Подать позже</label>
+    </div>
+    <button class="checkout-btn" id="checkoutBtn">Оплатить заказ</button>
+`;
+cartItems.parentNode.appendChild(footer);
+
+document.getElementById('checkoutBtn').addEventListener('click', submitOrder);
 }
 
 function setupTouchEvents() {
@@ -506,6 +535,58 @@ function handleResize() {
         if (tabs) tabs.style.overflowX = 'visible';
     }
 }
+
+function submitOrder() {
+    if (cart.length === 0) return;
+    const serveTime = document.querySelector('input[name="serveTime"]:checked').value;
+    // Здесь можно запросить имя гостя или использовать дефолтное
+    const customerName = 'Гость';
+    const isMainOrder = true; // Пока основной заказ
+
+    fetch('/api/order/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            cart: cart,
+            serve_time: serveTime,
+            customer_name: customerName,
+            is_main_order: isMainOrder
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.order_number) {
+            // Показываем сообщение с номером заказа
+            const modal = document.getElementById('cartModal');
+            modal.innerHTML = `
+                <div class="order-confirmation">
+                    <h2>Заказ №${data.order_number} принят!</h2>
+                    <p>Сумма: ${data.total_price} ₽</p>
+                    <p>Время подачи: ${serveTime === 'now' ? 'сразу' : 'позже'}</p>
+                    <p>Ваш заказ готовится. Среднее время ожидания 15-20 минут.</p>
+                    <button class="btn" id="newOrderBtn">Новый заказ</button>
+                    <button class="btn" id="addToOrderBtn">Дозаказать</button>
+                </div>
+            `;
+            document.getElementById('newOrderBtn').addEventListener('click', () => {
+                cart = [];
+                saveCartToLocalStorage();
+                updateCartCount();
+                closeCart();
+            });
+            document.getElementById('addToOrderBtn').addEventListener('click', () => {
+                // Дозаказ: создаём новый заказ с пометкой is_main_order=False
+                // Пока просто очищаем корзину и показываем меню
+                cart = [];
+                saveCartToLocalStorage();
+                updateCartCount();
+                closeCart();
+                showToast('Добавьте блюда в корзину и оформите дозаказ', 'info');
+            });
+        }
+    });
+}
+
 window.addEventListener('resize', handleResize);
 
 // Привязка событий интерфейса

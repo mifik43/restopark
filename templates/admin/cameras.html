@@ -1,0 +1,128 @@
+{% extends "admin/base.html" %}
+{% block title %}Управление камерами{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Камеры видеонаблюдения</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCameraModal">
+        <i class="bi bi-plus-circle"></i> Добавить камеру
+    </button>
+</div>
+
+<!-- Фильтр по городу -->
+<div class="row mb-3">
+    <div class="col-auto">
+        <form class="d-flex">
+            <select name="city" class="form-select" onchange="this.form.submit()">
+                <option value="">Все города</option>
+                {% for city in cities %}
+                    <option value="{{ city.id }}" {% if selected_city == city.id %}selected{% endif %}>
+                        {{ city.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+</div>
+
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Город</th>
+            <th>URL потока</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cam in cameras %}
+        <tr>
+            <td>{{ cam.id }}</td>
+            <td>{{ cam.name }}</td>
+            <td>{{ cam.city.name if cam.city else '—' }}</td>
+            <td>{{ cam.stream_url }}</td>
+            <td class="table-actions">
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editCameraModal{{ cam.id }}" title="Редактировать">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <a href="{{ url_for('admin_camera_delete', id=cam.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Удалить камеру?')" title="Удалить">
+                    <i class="bi bi-trash"></i>
+                </a>
+            </td>
+        </tr>
+
+        <!-- Модальное окно редактирования -->
+        <div class="modal fade" id="editCameraModal{{ cam.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <form method="POST" action="{{ url_for('admin_camera_edit', id=cam.id) }}">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Редактировать камеру</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Название</label>
+                                <input type="text" name="name" value="{{ cam.name }}" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">URL потока</label>
+                                <input type="text" name="stream_url" value="{{ cam.stream_url }}" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Город</label>
+                                <select name="city_id" class="form-select" required>
+                                    {% for city in cities %}
+                                        <option value="{{ city.id }}" {% if cam.city_id == city.id %}selected{% endif %}>{{ city.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="submit" class="btn btn-primary">Сохранить</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Модальное окно добавления камеры -->
+<div class="modal fade" id="addCameraModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ url_for('admin_camera_add') }}">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Новая камера</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Название</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">URL потока</label>
+                        <input type="text" name="stream_url" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Город</label>
+                        <select name="city_id" class="form-select" required>
+                            {% for city in cities %}
+                                <option value="{{ city.id }}" {% if selected_city == city.id %}selected{% endif %}>{{ city.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

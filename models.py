@@ -1,15 +1,56 @@
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
 from datetime import datetime
 
 db = SQLAlchemy()
 
-class Category(db.Model):
-    __tablename__ = 'categories'
+class City(db.Model):
+    __tablename__ = 'cities'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     slug = db.Column(db.String(100), unique=True, nullable=False)
+    address = db.Column(db.String(200), default='')
+    working_hours = db.Column(db.String(200), default='')
+    phone = db.Column(db.String(50), default='')
+    footer_info = db.Column(db.Text, default='')
+
+    categories = db.relationship('Category', backref='city', lazy='dynamic')
+    items = db.relationship('MenuItem', backref='city', lazy='dynamic')
+    cameras = db.relationship('Camera', backref='city', lazy='dynamic')
+    users = db.relationship('User', backref='city', lazy='dynamic')
+
+class Camera(db.Model):
+    __tablename__ = 'cameras'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    stream_url = db.Column(db.String(500), nullable=False, default='')
+    city_id = db.Column(db.Integer, db.ForeignKey('cities.id'), nullable=False)
+
+class User(UserMixin, db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128))
+    is_admin = db.Column(db.Boolean, default=False)
+    city_id = db.Column(db.Integer, db.ForeignKey('cities.id'), nullable=True)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+class Category(db.Model):
+    __tablename__ = 'categories'
+    __table_args__ = (db.UniqueConstraint('slug', 'city_id', name='uq_slug_city'),)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    slug = db.Column(db.String(100), nullable=False)
     order = db.Column(db.Integer, default=0)
     parent_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
+    city_id = db.Column(db.Integer, db.ForeignKey('cities.id'), nullable=False)
+
     parent = db.relationship('Category', remote_side=[id], backref='subcategories')
     items = db.relationship('MenuItem', backref='category', lazy='dynamic', cascade='all, delete-orphan')
 
@@ -19,7 +60,8 @@ class Category(db.Model):
             'name': self.name,
             'slug': self.slug,
             'order': self.order,
-            'parent_id': self.parent_id
+            'parent_id': self.parent_id,
+            'city_id': self.city_id
         }
 
 class MenuItem(db.Model):
@@ -40,6 +82,7 @@ class MenuItem(db.Model):
     is_available = db.Column(db.Boolean, default=True)
     order = db.Column(db.Integer, default=0)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
+    city_id = db.Column(db.Integer, db.ForeignKey('cities.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -60,16 +103,46 @@ class MenuItem(db.Model):
             'alcohol_content': self.alcohol_content,
             'is_available': self.is_available,
             'order': self.order,
-            'category_id': self.category_id
+            'category_id': self.category_id,
+            'city_id': self.city_id
+        }
+
+class Order(db.Model):
+    __tablename__ = 'orders'
+    id = db.Column(db.Integer, primary_key=True)
+    order_number = db.Column(db.String(20), unique=True, nullable=False)
+    status = db.Column(db.String(20), default='confirmed')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    total_price = db.Column(db.Integer, nullable=False)
+    customer_name = db.Column(db.String(100), default='Гость')
+    serve_time = db.Column(db.String(20), default='now')
+    is_main_order = db.Column(db.Boolean, default=True)
+
+    items = db.relationship('OrderItem', backref='order', lazy='dynamic', cascade='all, delete-orphan')
+
+class OrderItem(db.Model):
+    __tablename__ = 'order_items'
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
+    menu_item_id = db.Column(db.Integer, db.ForeignKey('menu_items.id'), nullable=False)
+    quantity = db.Column(db.Integer, default=1)
+    price = db.Column(db.Integer, nullable=False)
+
+    menu_item = db.relationship('MenuItem')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'menu_item_id': self.menu_item_id,
+            'name': self.menu_item.name if self.menu_item else 'Удалённое блюдо',
+            'quantity': self.quantity,
+            'price': self.price
         }
     
 class GameSession(db.Model):
     __tablename__ = 'game_sessions'
     id = db.Column(db.Integer, primary_key=True)
-    game_name = db.Column(db.String(50), nullable=False)  # 'racing', 'snake', '3match', ...
+    game_id = db.Column(db.String(50), nullable=False)
     start_time = db.Column(db.DateTime, default=datetime.utcnow)
     end_time = db.Column(db.DateTime, nullable=True)
-    duration = db.Column(db.Integer, default=0)  # в секундах
-    completed = db.Column(db.Boolean, default=False)  # доиграл или вышел
-    score = db.Column(db.Integer, default=0)
-    user_agent = db.Column(db.String(200))  # для аналитики устройства

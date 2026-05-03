@@ -20,14 +20,27 @@
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('admin_dashboard') }}">🍽️ RESTOPARK — Управление</a>
-            <div class="d-flex">
-                <a href="{{ url_for('index') }}" class="btn btn-outline-light me-2" target="_blank">Открыть сайт</a>
-                <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-danger">Выйти</a>
-            </div>
-        </div>
-    </nav>
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{{ url_for('admin_dashboard') }}">🍽️ RESTOPARK CRM</a>
+    <div class="d-flex align-items-center gap-2">
+      {% if session.admin_logged_in %}
+        {% set user = User.query.get(session.user_id) %}
+        {% if user.is_admin %}
+        <select class="form-select form-select-sm" onchange="if(this.value) window.location.href='/admin/switch_city/'+this.value">
+            <option value="">-- Выбрать город --</option>
+            {% for city in City.query.all() %}
+            <option value="{{ city.id }}" {% if session.current_city_id == city.id %}selected{% endif %}>{{ city.name }}</option>
+            {% endfor %}
+        </select>
+        {% else %}
+        <span class="text-light me-3">🏙️ {{ City.query.get(session.current_city_id).name if session.current_city_id else '—' }}</span>
+        {% endif %}
+      {% endif %}
+      <a href="{{ url_for('index') }}" class="btn btn-outline-light me-2" target="_blank">Сайт</a>
+      <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-danger">Выйти</a>
+    </div>
+  </div>
+</nav>
 
     <div class="container-fluid">
         <div class="row">
@@ -50,9 +63,20 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'admin_stats' %}active{% endif %}" href="{{ url_for('admin_stats') }}">
+                            <a class="nav-link {% if request.endpoint == 'admin_stats' %}active{% endif %}" href="{{ url_for('admin_statistics') }}">
                                 <i class="bi bi-bar-chart"></i> Статистика игр
                             </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin_cameras') }}">Камеры</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'admin_cities' %}active{% endif %}" href="{{ url_for('admin_cities') }}">
+                                <i class="bi bi-building"></i> Города
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin_orders') }}"><i class="bi bi-receipt"></i> Заказы</a>
                         </li>
                     </ul>
                 </div>

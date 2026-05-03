@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RESTOPARK</title>
+    <title>RESTOPARK — Самара</title>
     <style>
         * {
             margin: 0;
@@ -26,9 +26,14 @@
         }
         h1 {
             color: white;
-            margin-bottom: 50px;
+            margin-bottom: 30px;
             font-size: 3rem;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .subtitle {
+            color: #ccc;
+            font-size: 1.3rem;
+            margin-bottom: 50px;
         }
         .buttons {
             display: flex;
@@ -54,15 +59,10 @@
         .btn:active {
             transform: translateY(0);
         }
-        .btn-menu {
-            background: #d32f2f;
-        }
-        .btn-cartoons {
-            background: #f39c12;
-        }
-        .btn-games {
-            background: #27ae60;
-        }
+        .btn-menu { background: #d32f2f; }
+        .btn-cartoons { background: #f39c12; }
+        .btn-games { background: #27ae60; }
+        .btn-cameras { background: #2980b9; }
         @media (max-width: 600px) {
             h1 { font-size: 2rem; }
             .btn { font-size: 1.8rem; padding: 30px 15px; }
@@ -72,10 +72,12 @@
 <body>
     <div class="container">
         <h1>Добро пожаловать в RESTOPARK!</h1>
+        <p class="subtitle">г. Самара, Южное шоссе, 5</p>
         <div class="buttons">
             <a href="/menu" class="btn btn-menu">🍽️ Меню</a>
             <a href="/cartoons" class="btn btn-cartoons">📺 Мультфильмы</a>
             <a href="/games" class="btn btn-games">🎮 Игры</a>
+            <a href="/cameras" class="btn btn-cameras">📷 Камеры</a>
         </div>
     </div>
 </body>

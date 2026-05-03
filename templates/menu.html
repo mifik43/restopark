@@ -8,6 +8,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <script>
+    const selectedCityId = localStorage.getItem('selectedCityId');
+    if (!selectedCityId) {
+        document.body.innerHTML = `
+            <div style="display:flex; align-items:center; justify-content:center; height:100vh; text-align:center; background:#1a1a1a; color:white; font-family:'Segoe UI';">
+                <div>
+                    <h1>⚠️ Устройство не настроено</h1>
+                    <p>Пожалуйста, выберите город на главной странице или обратитесь к администратору.</p>
+                </div>
+            </div>`;
+    }
+    </script>
 </head>
 <body>
     <!-- Header -->
@@ -122,5 +134,18 @@
     <div class="toast" id="toast"></div>
 
     <script src="{{ url_for('static', filename='js/menu.js') }}"></script>
+
+{% if cities %}
+<div class="city-selector">
+    <form method="POST" action="{{ url_for('select_city') }}">
+        <label>Город:</label>
+        <select name="city_id" onchange="this.form.submit()">
+            {% for city in cities %}
+                <option value="{{ city.id }}" {% if selected_city and selected_city.id == city.id %}selected{% endif %}>{{ city.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+{% endif %}
 </body>
 </html>

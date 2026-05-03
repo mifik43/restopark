@@ -1567,8 +1567,57 @@ footer {
 .restart-btn { background: radial-gradient(circle at 30% 10%, #6e906b, #42633b); box-shadow: 0 6px 0 #2b4a25; }
 .exit-btn { background: radial-gradient(circle at 30% 10%, #4a5a3a, #2e3a22); box-shadow: 0 6px 0 #1f2a14; }
 
+.btn-cameras {
+    background: #34495e;
+}
+
 .sound-btn {
     background: radial-gradient(circle at 30% 10%, #9b8a7a, #6b5a4a);
     box-shadow: 0 6px 0 #4a3a2a;
     min-width: 70px;
+}
+
+.city-selector select {
+    font-size: 1.2rem;
+    padding: 10px 20px;
+    border-radius: 50px;
+    background: #fff;
+    color: #333;
+    font-weight: bold;
+}
+
+.cart-footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+.serve-time {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+.checkout-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary-red);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+}
+.order-confirmation {
+    text-align: center;
+    padding: 40px 20px;
+}
+.order-confirmation h2 {
+    color: var(--primary-dark);
+    margin-bottom: 20px;
+}
+.order-confirmation button {
+    margin: 10px;
+    padding: 12px 24px;
+    font-size: 16px;
 }
