@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Кухня — Заказы</title>
+    <title>Кухня — Активные заказы</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background: #1e1e2f; color: white; padding: 20px; }
@@ -11,11 +11,16 @@
         .order-number { font-size: 2rem; font-weight: bold; color: #ffd966; }
         .order-time { font-size: 0.9rem; color: #aaa; }
         .order-items { margin: 15px 0; }
-        .status-badge { font-size: 1rem; padding: 5px 15px; border-radius: 20px; }
-        .status-confirmed { background: #f39c12; }
-        .status-cooking { background: #3498db; }
-        .status-ready { background: #27ae60; }
-        .btn-action { margin-right: 10px; }
+        .status-badge { font-size: 1rem; padding: 5px 15px; border-radius: 20px; display: inline-block; }
+        .status-confirmed { background: #f39c12; color: #000; }
+        .status-cooking { background: #3498db; color: #fff; }
+        .status-ready { background: #27ae60; color: #fff; }
+        .status-completed { background: #aaa; color: #333; }
+        .btn-action { margin-right: 10px; min-width: 180px; font-size: 1.1rem; }
+        @media (max-width: 576px) {
+            .order-number { font-size: 1.6rem; }
+            .btn-action { min-width: auto; width: 100%; margin-bottom: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -25,40 +30,61 @@
     </div>
 
     <script>
+        const statusLabels = {
+            'confirmed': 'Принят',
+            'cooking': 'Готовится',
+            'ready': 'Готов',
+            'completed': 'Выдан'
+        };
+
+        const actionButtons = {
+            'confirmed': { label: 'Начать готовить', nextStatus: 'cooking', btnClass: 'btn-primary' },
+            'cooking':   { label: 'Готово', nextStatus: 'ready', btnClass: 'btn-success' },
+            'ready':     { label: 'Выдано', nextStatus: 'completed', btnClass: 'btn-info' }
+        };
+
         function loadOrders() {
             fetch('/api/orders/active')
                 .then(res => res.json())
                 .then(orders => {
                     const container = document.getElementById('ordersContainer');
                     if (orders.length === 0) {
-                        container.innerHTML = '<p>Нет активных заказов</p>';
+                        container.innerHTML = '<p class="text-center mt-4">Нет активных заказов</p>';
                         return;
                     }
-                    container.innerHTML = orders.map(order => `
+                    container.innerHTML = orders.map(order => {
+                        const statusText = statusLabels[order.status] || order.status;
+                        const action = actionButtons[order.status];
+                        const buttonHtml = action 
+                            ? `<button class="btn ${action.btnClass} btn-action" onclick="updateStatus(${order.id}, '${action.nextStatus}')">${action.label}</button>`
+                            : '';
+                        return `
                         <div class="order-card" id="order-${order.id}">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="order-number">#${order.order_number}</span>
-                                <span class="order-time">${new Date(order.created_at).toLocaleTimeString()}</span>
+                                <span class="order-time">${new Date(order.created_at).toLocaleTimeString('ru-RU')}</span>
                             </div>
                             <div class="order-items">
                                 ${order.items.map(item => `
-                                    <div>${item.name} x${item.quantity} — ${item.price}₽</div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>${item.name} x${item.quantity}</span>
+                                        <span>${item.price * item.quantity} ₽</span>
+                                    </div>
                                 `).join('')}
                             </div>
-                            <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-center mt-2">
                                 <span>Подача: ${order.serve_time === 'now' ? 'сразу' : 'позже'}</span>
-                                <span class="status-badge status-${order.status}">${order.status}</span>
+                                <span class="status-badge status-${order.status}">${statusText}</span>
                             </div>
                             <div class="mt-3">
-                                ${order.status === 'confirmed' 
-                                    ? `<button class="btn btn-primary btn-action" onclick="updateStatus(${order.id}, 'cooking')">Начать готовку</button>`
-                                    : order.status === 'cooking'
-                                    ? `<button class="btn btn-success btn-action" onclick="updateStatus(${order.id}, 'ready')">Готово</button>`
-                                    : `<button class="btn btn-info btn-action" onclick="updateStatus(${order.id}, 'completed')">Выдано</button>`
-                                }
+                                ${buttonHtml}
                             </div>
-                        </div>
-                    `).join('');
+                        </div>`;
+                    }).join('');
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('ordersContainer').innerHTML = '<p class="text-danger">Ошибка загрузки заказов</p>';
                 });
         }
 
@@ -69,11 +95,12 @@
                 body: JSON.stringify({ status: status })
             })
             .then(res => res.json())
-            .then(() => loadOrders());
+            .then(() => loadOrders())
+            .catch(err => console.error(err));
         }
 
         loadOrders();
-        setInterval(loadOrders, 5000); // обновление каждые 5 секунд
+        setInterval(loadOrders, 5000);
     </script>
 </body>
 </html>

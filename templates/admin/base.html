@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Админ-панель RESTOPARK{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>{% block title %}Админ‑панель RESTOPARK{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
@@ -11,72 +11,49 @@
         .sidebar { position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; padding: 60px 0 0; box-shadow: inset -1px 0 0 rgba(0,0,0,.1); }
         .sidebar .nav-link { font-weight: 500; color: #333; padding: 0.75rem 1rem; }
         .sidebar .nav-link.active { color: #0d6efd; }
-        .sidebar .nav-link:hover { background: #e9ecef; }
         main { padding-top: 20px; }
-        .table-actions { white-space: nowrap; }
-        .table-actions .btn { margin: 0 2px; }
-        .dish-image-thumb { max-height: 40px; max-width: 60px; object-fit: contain; }
+        @media (max-width: 767.98px) {
+            .sidebar { display: none; }
+            .sidebar.show { display: block; position: fixed; top: 54px; bottom: 0; width: 250px; background: #f8f9fa; z-index: 1040; overflow-y: auto; padding-top: 0; }
+            main { margin-left: 0 !important; width: 100%; }
+            .navbar-toggler { border: none; }
+            table { font-size: 0.9rem; }
+            .table-actions .btn { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+        }
     </style>
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark fixed-top">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="{{ url_for('admin_dashboard') }}">🍽️ RESTOPARK CRM</a>
-    <div class="d-flex align-items-center gap-2">
-      {% if session.admin_logged_in %}
-        {% set user = User.query.get(session.user_id) %}
-        {% if user.is_admin %}
-        <select class="form-select form-select-sm" onchange="if(this.value) window.location.href='/admin/switch_city/'+this.value">
-            <option value="">-- Выбрать город --</option>
-            {% for city in City.query.all() %}
-            <option value="{{ city.id }}" {% if session.current_city_id == city.id %}selected{% endif %}>{{ city.name }}</option>
-            {% endfor %}
-        </select>
-        {% else %}
-        <span class="text-light me-3">🏙️ {{ City.query.get(session.current_city_id).name if session.current_city_id else '—' }}</span>
-        {% endif %}
-      {% endif %}
-      <a href="{{ url_for('index') }}" class="btn btn-outline-light me-2" target="_blank">Сайт</a>
-      <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-danger">Выйти</a>
-    </div>
-  </div>
-</nav>
+        <div class="container-fluid">
+            <button class="navbar-toggler d-md-none" type="button" id="sidebarToggle"><i class="bi bi-list"></i></button>
+            <a class="navbar-brand" href="{{ url_for('admin_dashboard') }}">🍽️ RESTOPARK — Самара</a>
+            <div class="d-flex">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-light me-2" target="_blank">Сайт</a>
+                <a href="{{ url_for('kitchen_admin') }}" class="btn btn-outline-light me-2" target="_blank">Кухня</a>
+                <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-danger">Выйти</a>
+            </div>
+        </div>
+    </nav>
 
     <div class="container-fluid">
         <div class="row">
-            <nav class="col-md-2 d-md-block bg-light sidebar">
+            <nav class="col-md-2 d-md-block bg-light sidebar" id="sidebar">
                 <div class="position-sticky">
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
-                                <i class="bi bi-speedometer2"></i> Главная
-                            </a>
+                            <a class="nav-link {{ 'active' if request.endpoint == 'admin_dashboard' }}" href="{{ url_for('admin_dashboard') }}"><i class="bi bi-speedometer2"></i> Главная</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'admin_categories' %}active{% endif %}" href="{{ url_for('admin_categories') }}">
-                                <i class="bi bi-folder"></i> Категории
-                            </a>
+                            <a class="nav-link {{ 'active' if request.endpoint == 'admin_categories' }}" href="{{ url_for('admin_categories') }}"><i class="bi bi-folder"></i> Категории</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'admin_items' %}active{% endif %}" href="{{ url_for('admin_items') }}">
-                                <i class="bi bi-card-list"></i> Блюда
-                            </a>
+                            <a class="nav-link {{ 'active' if request.endpoint == 'admin_items' }}" href="{{ url_for('admin_items') }}"><i class="bi bi-card-list"></i> Блюда</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'admin_stats' %}active{% endif %}" href="{{ url_for('admin_statistics') }}">
-                                <i class="bi bi-bar-chart"></i> Статистика игр
-                            </a>
+                            <a class="nav-link {{ 'active' if request.endpoint == 'admin_orders' }}" href="{{ url_for('admin_orders') }}"><i class="bi bi-receipt"></i> Заказы</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin_cameras') }}">Камеры</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.endpoint == 'admin_cities' %}active{% endif %}" href="{{ url_for('admin_cities') }}">
-                                <i class="bi bi-building"></i> Города
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('admin_orders') }}"><i class="bi bi-receipt"></i> Заказы</a>
+                            <a class="nav-link {{ 'active' if request.endpoint == 'admin_stats' }}" href="{{ url_for('admin_stats') }}"><i class="bi bi-bar-chart"></i> Статистика игр</a>
                         </li>
                     </ul>
                 </div>
@@ -93,13 +70,25 @@
                         {% endfor %}
                     {% endif %}
                 {% endwith %}
-
                 {% block content %}{% endblock %}
             </main>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('show');
+        });
+        // Закрытие боковой панели при клике вне её (на мобильных)
+        document.addEventListener('click', (e) => {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            if (window.innerWidth < 768 && sidebar.classList.contains('show') && !sidebar.contains(e.target) && e.target !== toggle) {
+                sidebar.classList.remove('show');
+            }
+        });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

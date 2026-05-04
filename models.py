@@ -1,56 +1,15 @@
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin
 from datetime import datetime
 
 db = SQLAlchemy()
 
-class City(db.Model):
-    __tablename__ = 'cities'
+class Category(db.Model):
+    __tablename__ = 'categories'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     slug = db.Column(db.String(100), unique=True, nullable=False)
-    address = db.Column(db.String(200), default='')
-    working_hours = db.Column(db.String(200), default='')
-    phone = db.Column(db.String(50), default='')
-    footer_info = db.Column(db.Text, default='')
-
-    categories = db.relationship('Category', backref='city', lazy='dynamic')
-    items = db.relationship('MenuItem', backref='city', lazy='dynamic')
-    cameras = db.relationship('Camera', backref='city', lazy='dynamic')
-    users = db.relationship('User', backref='city', lazy='dynamic')
-
-class Camera(db.Model):
-    __tablename__ = 'cameras'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    stream_url = db.Column(db.String(500), nullable=False, default='')
-    city_id = db.Column(db.Integer, db.ForeignKey('cities.id'), nullable=False)
-
-class User(UserMixin, db.Model):
-    __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128))
-    is_admin = db.Column(db.Boolean, default=False)
-    city_id = db.Column(db.Integer, db.ForeignKey('cities.id'), nullable=True)
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-class Category(db.Model):
-    __tablename__ = 'categories'
-    __table_args__ = (db.UniqueConstraint('slug', 'city_id', name='uq_slug_city'),)
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    slug = db.Column(db.String(100), nullable=False)
     order = db.Column(db.Integer, default=0)
     parent_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
-    city_id = db.Column(db.Integer, db.ForeignKey('cities.id'), nullable=False)
-
     parent = db.relationship('Category', remote_side=[id], backref='subcategories')
     items = db.relationship('MenuItem', backref='category', lazy='dynamic', cascade='all, delete-orphan')
 
@@ -60,8 +19,7 @@ class Category(db.Model):
             'name': self.name,
             'slug': self.slug,
             'order': self.order,
-            'parent_id': self.parent_id,
-            'city_id': self.city_id
+            'parent_id': self.parent_id
         }
 
 class MenuItem(db.Model):
@@ -82,7 +40,6 @@ class MenuItem(db.Model):
     is_available = db.Column(db.Boolean, default=True)
     order = db.Column(db.Integer, default=0)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=False)
-    city_id = db.Column(db.Integer, db.ForeignKey('cities.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -103,8 +60,7 @@ class MenuItem(db.Model):
             'alcohol_content': self.alcohol_content,
             'is_available': self.is_available,
             'order': self.order,
-            'category_id': self.category_id,
-            'city_id': self.city_id
+            'category_id': self.category_id
         }
 
 class Order(db.Model):
@@ -120,6 +76,19 @@ class Order(db.Model):
     is_main_order = db.Column(db.Boolean, default=True)
 
     items = db.relationship('OrderItem', backref='order', lazy='dynamic', cascade='all, delete-orphan')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'order_number': self.order_number,
+            'status': self.status,
+            'created_at': self.created_at.isoformat(),
+            'total_price': self.total_price,
+            'customer_name': self.customer_name,
+            'serve_time': self.serve_time,
+            'is_main_order': self.is_main_order,
+            'items': [item.to_dict() for item in self.items]
+        }
 
 class OrderItem(db.Model):
     __tablename__ = 'order_items'
@@ -139,7 +108,7 @@ class OrderItem(db.Model):
             'quantity': self.quantity,
             'price': self.price
         }
-    
+
 class GameSession(db.Model):
     __tablename__ = 'game_sessions'
     id = db.Column(db.Integer, primary_key=True)

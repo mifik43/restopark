@@ -3,17 +3,9 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Категории меню</h2>
-    <div>
-        <select class="form-select d-inline-block w-auto me-2" id="cityFilter" onchange="window.location.href='?city='+this.value">
-            <option value="">Все города</option>
-            {% for city in cities %}
-                <option value="{{ city.id }}" {% if request.args.get('city')|int == city.id %}selected{% endif %}>{{ city.name }}</option>
-            {% endfor %}
-        </select>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-            <i class="bi bi-plus-circle"></i> Добавить категорию
-        </button>
-    </div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+        <i class="bi bi-plus-circle"></i> Добавить категорию
+    </button>
 </div>
 
 <div class="table-responsive">
@@ -22,9 +14,8 @@
             <tr>
                 <th>ID</th>
                 <th>Название</th>
-                <th>Slug</th>
+                <th>Код (slug)</th>
                 <th>Родительская</th>
-                <th>Город</th>
                 <th>Порядок</th>
                 <th>Действия</th>
             </tr>
@@ -36,7 +27,6 @@
                 <td>{{ '—' * (loop.depth-1) }} {{ cat.name }}</td>
                 <td>{{ cat.slug }}</td>
                 <td>{{ cat.parent.name if cat.parent else '—' }}</td>
-                <td>{{ cat.city.name if cat.city else '—' }}</td>
                 <td>{{ cat.order }}</td>
                 <td class="table-actions">
                     <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editCategoryModal{{ cat.id }}" title="Редактировать">
@@ -47,7 +37,7 @@
                     </a>
                 </td>
             </tr>
-            <!-- Модальное окно редактирования категории -->
+            <!-- Модальное окно редактирования -->
             <div class="modal fade" id="editCategoryModal{{ cat.id }}" tabindex="-1">
                 <div class="modal-dialog">
                     <form method="POST" action="{{ url_for('admin_category_edit', id=cat.id) }}">
@@ -62,23 +52,17 @@
                                     <input type="text" name="name" value="{{ cat.name }}" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Slug</label>
+                                    <label class="form-label">Код (slug)</label>
                                     <input type="text" name="slug" value="{{ cat.slug }}" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Родительская категория</label>
                                     <select name="parent_id" class="form-select">
                                         <option value="">Нет (корневая)</option>
-                                        {% for p in all_categories if p.id != cat.id %}
-                                            <option value="{{ p.id }}" {% if cat.parent_id == p.id %}selected{% endif %}>{{ p.name }} ({{ p.city.name }})</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Город</label>
-                                    <select name="city_id" class="form-select" required>
-                                        {% for city in cities %}
-                                            <option value="{{ city.id }}" {% if cat.city_id == city.id %}selected{% endif %}>{{ city.name }}</option>
+                                        {% for p in categories if p.id != cat.id %}
+                                            <option value="{{ p.id }}" {% if cat.parent_id == p.id %}selected{% endif %}>
+                                                {% if p.parent %}↳{% endif %} {{ p.name }}
+                                            </option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -89,7 +73,7 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                                <button type="submit" class="btn btn-primary">Сохранить</button>
+                                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
                             </div>
                         </div>
                     </form>
@@ -118,29 +102,20 @@
                         <input type="text" name="name" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Slug</label>
+                        <label class="form-label">Код (slug)</label>
                         <input type="text" name="slug" class="form-control" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Родительская категория</label>
                         <select name="parent_id" class="form-select">
                             <option value="">Нет (корневая)</option>
-                            {% for cat in all_categories recursive %}
-                                <option value="{{ cat.id }}">{{ '—' * (loop.depth-1) }} {{ cat.name }} ({{ cat.city.name }})</option>
+                            {% for cat in categories recursive %}
+                                <option value="{{ cat.id }}">{{ '—' * (loop.depth-1) }} {{ cat.name }}</option>
                                 {% if cat.subcategories %}
                                     {{ loop(cat.subcategories|sort(attribute='order')) }}
                                 {% endif %}
                             {% endfor %}
                         </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Город</label>
-                        <select name="city_id" class="form-select" required>
-                            {% for city in cities %}
-                                <option value="{{ city.id }}" {% if request.args.get('city')|int == city.id %}selected{% endif %}>{{ city.name }}</option>
-                            {% endfor %}
-                        </select>
-                        <small class="text-muted">Выберите город, к которому относится категория</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Порядок сортировки</label>
@@ -149,7 +124,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="submit" class="btn btn-primary">Добавить</button>
+                    <button type="submit" class="btn btn-primary">Добавить категорию</button>
                 </div>
             </div>
         </form>

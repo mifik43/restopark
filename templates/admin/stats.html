@@ -1,0 +1,31 @@
+{% extends "admin/base.html" %}
+{% block title %}Статистика игр{% endblock %}
+{% block content %}
+<h2>Игровые сессии</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Игра</th>
+            <th>Начало</th>
+            <th>Конец</th>
+            <th>Длительность</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in sessions %}
+        <tr>
+            <td>{{ s.game_id }}</td>
+            <td>{{ s.start_time.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td>{{ s.end_time.strftime('%d.%m.%Y %H:%M') if s.end_time else '—' }}</td>
+            <td>
+                {% if s.end_time %}
+                    {{ (s.end_time - s.start_time).seconds }} сек
+                {% else %}
+                    Не завершена
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

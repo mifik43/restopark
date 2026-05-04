@@ -17,12 +17,19 @@
         <tr>
             <td>{{ order.order_number }}</td>
             <td>{{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
-            <td>{{ order.total_price }}₽</td>
-            <td>{{ order.status }}</td>
+            <td>{{ order.total_price }} ₽</td>
+            <td>
+                {% if order.status == 'confirmed' %}Принят
+                {% elif order.status == 'cooking' %}Готовится
+                {% elif order.status == 'ready' %}Готов
+                {% elif order.status == 'completed' %}Выдан
+                {% else %}{{ order.status }}
+                {% endif %}
+            </td>
             <td>
                 <ul>
                     {% for item in order.items %}
-                    <li>{{ item.menu_item.name }} x{{ item.quantity }} — {{ item.price * item.quantity }}₽</li>
+                    <li>{{ item.menu_item.name }} x{{ item.quantity }} — {{ item.price * item.quantity }} ₽</li>
                     {% endfor %}
                 </ul>
             </td>

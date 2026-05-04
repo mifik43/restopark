@@ -2,24 +2,42 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta name="theme-color" content="#1a1a1a">
-    <title>RESTOPARK Меню</title>
+    <title>RESTOPARK — Меню</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <script>
-    const selectedCityId = localStorage.getItem('selectedCityId');
-    if (!selectedCityId) {
-        document.body.innerHTML = `
-            <div style="display:flex; align-items:center; justify-content:center; height:100vh; text-align:center; background:#1a1a1a; color:white; font-family:'Segoe UI';">
-                <div>
-                    <h1>⚠️ Устройство не настроено</h1>
-                    <p>Пожалуйста, выберите город на главной странице или обратитесь к администратору.</p>
-                </div>
-            </div>`;
-    }
-    </script>
+    <style>
+        /* Адаптивные улучшения */
+        .category-nav a { font-size: clamp(13px, 2vw, 15px); padding: 8px 14px; }
+        .menu-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+        @media (max-width: 600px) {
+            .menu-grid { grid-template-columns: 1fr; }
+            .add-to-cart { min-width: auto; width: 100%; font-size: 16px; }
+            .card-title { font-size: 18px; }
+        }
+        /* Корзина */
+        .cart-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
+        .cart-modal.active { display: flex; }
+        .cart-content { background: white; width: 100%; max-width: 600px; max-height: 80vh; border-radius: 12px; padding: 24px; overflow-y: auto; }
+        .cart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .close-cart { background: none; border: none; font-size: 28px; cursor: pointer; }
+        .cart-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; gap: 10px; flex-wrap: wrap; }
+        .cart-item-info { flex: 1; min-width: 140px; }
+        .cart-item-controls { display: flex; align-items: center; gap: 8px; }
+        .cart-item-controls button { width: 36px; height: 36px; font-size: 20px; border-radius: 50%; border: 2px solid #ccc; background: white; }
+        .cart-item-total { min-width: 80px; text-align: right; font-weight: bold; }
+        .cart-actions { margin-top: 20px; text-align: right; }
+        .cart-checkout { background: #d32f2f; color: white; padding: 14px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1.1rem; }
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 16px 24px; border-radius: 8px; z-index: 2000; opacity: 0; transition: opacity 0.3s; font-size: 16px; }
+        .toast.show { opacity: 1; }
+        /* Модальное окно для увеличения изображения */
+        .image-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; padding: 20px; }
+        .image-modal.active { display: flex; }
+        .image-modal-content { position: relative; max-width: 90%; max-height: 90%; }
+        .image-modal-content img { max-width: 100%; max-height: 90vh; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .close-image-modal { position: absolute; top: -30px; right: 0; background: none; border: none; color: white; font-size: 36px; cursor: pointer; }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -29,13 +47,7 @@
                 <div class="logo-container">
                     <img src="{{ url_for('static', filename='images/logo.png') }}" alt="RESTOPARK Logo" loading="lazy">
                 </div>
-                <div class="restaurant-info">
-                    <!--<h1>RESTOPARK</h1>-->
-                    <!--<p>Самара • Амбар Вафли + Бар • Осень 2025</p>-->
-                </div>
-                <button class="mobile-menu-btn" id="mobileMenuBtn">
-                    <i class="fas fa-bars"></i>
-                </button>
+                <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
             </div>
             <div class="contact-info">
                 <p><i class="fas fa-map-marker-alt"></i> г. Самара Южное шоссе 5</p>
@@ -44,15 +56,16 @@
         </div>
     </header>
 
-    <!-- Navigation -->
+    <!-- Навигация -->
     <nav>
         <div class="nav-container">
-            <div class="category-nav" id="categoryNav"></div>
+            <div class="category-nav" id="categoryNav">
+                {% for cat in menu_tree %}
+                    <a href="#" onclick="showCategory('{{ cat.slug }}')" class="{% if loop.first %}active{% endif %}">{{ cat.name }}</a>
+                {% endfor %}
+            </div>
             <div class="nav-right">
-                <a href="/" class="back-home" title="На главную">
-                    <i class="fas fa-arrow-left"></i>
-                    <span>Назад</span>
-                </a>
+                <a href="/" class="back-home"><i class="fas fa-arrow-left"></i><span>Назад</span></a>
                 <div class="cart-icon" id="cartIcon">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="cart-count" id="cartCount">0</span>
@@ -61,91 +74,293 @@
         </div>
     </nav>
 
-    <!-- Mobile Navigation (Dropdown) -->
+    <!-- Мобильная навигация -->
     <div class="mobile-nav" id="mobileNav">
         <div class="mobile-nav-content">
-            <button class="close-mobile-nav" id="closeMobileNav">
-                <i class="fas fa-times"></i>
-            </button>
-            <div class="mobile-categories" id="mobileCategories"></div>
-            <div class="mobile-contact-info">
-                <h3>Контакты</h3>
-                <p><i class="fas fa-map-marker-alt"></i> г. Самара</p>
-                <p><i class="fas fa-clock"></i> Пн-Вс: 10:00 - 23:00</p>
+            <button class="close-mobile-nav" id="closeMobileNav"><i class="fas fa-times"></i></button>
+            <div class="mobile-categories" id="mobileCategories">
+                {% for cat in menu_tree %}
+                    <a href="#" onclick="showCategory('{{ cat.slug }}'); closeMobileNav()" class="{% if loop.first %}active{% endif %}">{{ cat.name }}</a>
+                {% endfor %}
             </div>
         </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Основной контент -->
     <main class="container">
-        <div class="category-quick-nav" id="categoryQuickNav"></div>
-        <div id="menuSections"></div>
+        {% for cat in menu_tree recursive %}
+            <section id="category-{{ cat.slug }}" class="category-section {% if loop.first %}active{% endif %}">
+                <div class="category-title">
+                    <h2>{{ cat.name }}</h2>
+                    <span>{{ cat.dishes|length }} позиций</span>
+                </div>
+                {% if cat.subcategories %}
+                    <div class="drinks-tabs-container">
+                        <div class="drinks-tabs">
+                            {% for sub in cat.subcategories %}
+                                <div class="drinks-tab" data-subgroup="{{ sub.slug }}" onclick="loadSubgroup('{{ cat.slug }}', '{{ sub.slug }}')">
+                                    {{ sub.name }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="drinks-content">
+                            {% for sub in cat.subcategories %}
+                                <div class="menu-grid subgroup-grid" id="subgroup-{{ cat.slug }}-{{ sub.slug }}" style="display: {% if loop.first %}grid{% else %}none{% endif %};">
+                                    {% for item in sub.dishes %}
+                                        <div class="menu-card" data-id="{{ item.id }}">
+                                            <div class="card-image" data-full-src="/static/{{ item.image_path }}">
+                                                <i class="fas {{ item.icon_class or 'fa-utensils' }} dish-icon"></i>
+                                                {% if item.image_path %}
+                                                    <img class="dish-image loaded" src="/static/{{ item.image_path }}" alt="{{ item.name }}" loading="lazy">
+                                                {% endif %}
+                                            </div>
+                                            <div class="card-content">
+                                                <div class="card-header">
+                                                    <h3 class="card-title">{{ item.name }}</h3>
+                                                    <div class="card-price">{{ item.price }} ₽</div>
+                                                </div>
+                                                <div class="info-row">
+                                                    {% if item.weight %}<span class="weight-info">{{ item.weight }}</span>{% endif %}
+                                                    {% if item.volume %}<span class="volume-info">{{ item.volume }}</span>{% endif %}
+                                                    {% if item.alcohol_content %}<span class="alcohol-info">{{ item.alcohol_content }}</span>{% endif %}
+                                                </div>
+                                                {% if item.description %}<p class="card-description">{{ item.description }}</p>{% endif %}
+                                                <div class="card-footer">
+                                                    <button class="add-to-cart" data-id="{{ item.id }}" data-name="{{ item.name }}" data-price="{{ item.price }}">В корзину</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="menu-grid">
+                        {% for item in cat.dishes %}
+                            <div class="menu-card" data-id="{{ item.id }}">
+                                <div class="card-image" data-full-src="/static/{{ item.image_path }}">
+                                    <i class="fas {{ item.icon_class or 'fa-utensils' }} dish-icon"></i>
+                                    {% if item.image_path %}
+                                        <img class="dish-image loaded" src="/static/{{ item.image_path }}" alt="{{ item.name }}" loading="lazy">
+                                    {% endif %}
+                                </div>
+                                <div class="card-content">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ item.name }}</h3>
+                                        <div class="card-price">{{ item.price }} ₽</div>
+                                    </div>
+                                    <div class="info-row">
+                                        {% if item.weight %}<span class="weight-info">{{ item.weight }}</span>{% endif %}
+                                        {% if item.volume %}<span class="volume-info">{{ item.volume }}</span>{% endif %}
+                                        {% if item.alcohol_content %}<span class="alcohol-info">{{ item.alcohol_content }}</span>{% endif %}
+                                    </div>
+                                    {% if item.description %}<p class="card-description">{{ item.description }}</p>{% endif %}
+                                    <div class="card-footer">
+                                        <button class="add-to-cart" data-id="{{ item.id }}" data-name="{{ item.name }}" data-price="{{ item.price }}">В корзину</button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </section>
+        {% endfor %}
     </main>
 
     <!-- Footer -->
     <footer>
         <div class="container">
             <div class="footer-content">
-                <div class="footer-section">
-                    <h3>RESTOPARK</h3>
-                    <p>Самара • Амбар</p>
-                </div>
-                <div>
-                    <p>В нашем парке есть игры на планшетах, а на втором этаже у нас есть PlayStation</p>
-                </div>
-                <div class="footer-section">
-                    <h3>Важно знать</h3>
-                    <div class="allergy-notice">
-                        <p>Описание блюд в меню может не содержать детальной информации о входящих ингредиентах. При наличии у вас аллергии уточняйте информацию о подробном составе блюд у официантов.</p>
-                        <p>Подача блюд может отличаться от представленной на фотографиях.</p>
-                    </div>
-                </div>
+                <div class="footer-section"><h3>RESTOPARK</h3><p>Самара • Амбар</p></div>
+                <div><p>В нашем парке есть игры на планшетах и PlayStation</p></div>
+                <div class="footer-section"><h3>Важно</h3><div class="allergy-notice"><p>Уточняйте состав блюд у официантов при аллергии.</p></div></div>
             </div>
-            <div class="copyright">
-                <p>&copy; 2026 RESTOPARK. Все права защищены.</p>
-            </div>
+            <div class="copyright"><p>&copy; 2026 RESTOPARK</p></div>
         </div>
     </footer>
 
-    <!-- Cart Modal -->
+    <!-- Корзина -->
     <div class="cart-modal" id="cartModal">
         <div class="cart-content">
             <div class="cart-header">
                 <h2>Ваш заказ</h2>
-                <button class="close-cart" id="closeCart">&times;</button>
+                <button class="close-cart" onclick="closeCart()">&times;</button>
             </div>
             <div class="cart-items" id="cartItems"></div>
-            <div class="cart-total">
-                Итого: <span id="cartTotal">0</span> ₽
+            <div class="cart-total">Итого: <span id="cartTotal">0</span> ₽</div>
+            <div class="cart-actions">
+                <button class="cart-checkout" id="checkoutBtn" style="display:none;" onclick="submitOrder()">Подтвердить заказ</button>
             </div>
-            <div class="cart-actions"></div>
         </div>
     </div>
 
-    <!-- Image Modal -->
+    <!-- Модальное окно для увеличенного изображения -->
     <div class="image-modal" id="imageModal">
         <div class="image-modal-content">
-            <button class="close-image-modal" id="closeImageModal">&times;</button>
+            <button class="close-image-modal" onclick="closeImageModal()">&times;</button>
             <img id="modalImage" src="" alt="Увеличенное изображение">
         </div>
     </div>
 
-    <!-- Toast Notification -->
     <div class="toast" id="toast"></div>
 
-    <script src="{{ url_for('static', filename='js/menu.js') }}"></script>
+    <script>
+        // --- Навигация ---
+        function showCategory(slug) {
+            document.querySelectorAll('.category-section').forEach(s => s.classList.remove('active'));
+            const section = document.getElementById('category-' + slug);
+            if (section) section.classList.add('active');
+            document.querySelectorAll('.category-nav a, .mobile-categories a').forEach(a => {
+                a.classList.toggle('active', a.getAttribute('onclick')?.includes(slug));
+            });
+        }
 
-{% if cities %}
-<div class="city-selector">
-    <form method="POST" action="{{ url_for('select_city') }}">
-        <label>Город:</label>
-        <select name="city_id" onchange="this.form.submit()">
-            {% for city in cities %}
-                <option value="{{ city.id }}" {% if selected_city and selected_city.id == city.id %}selected{% endif %}>{{ city.name }}</option>
-            {% endfor %}
-        </select>
-    </form>
-</div>
-{% endif %}
+        function loadSubgroup(catSlug, subSlug) {
+            const section = document.getElementById('category-' + catSlug);
+            if (!section) return;
+            section.querySelectorAll('.subgroup-grid').forEach(g => g.style.display = 'none');
+            const target = document.getElementById('subgroup-' + catSlug + '-' + subSlug);
+            if (target) target.style.display = 'grid';
+            section.querySelectorAll('.drinks-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.subgroup === subSlug);
+            });
+        }
+
+        function closeMobileNav() {
+            document.getElementById('mobileNav').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            document.getElementById('mobileNav').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        document.getElementById('closeMobileNav').addEventListener('click', closeMobileNav);
+
+        // --- Увеличение изображений ---
+        function openImageModal(src) {
+            document.getElementById('modalImage').src = src;
+            document.getElementById('imageModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Делегирование клика по картинке
+        document.addEventListener('click', function(e) {
+            const cardImage = e.target.closest('.card-image');
+            if (cardImage) {
+                const img = cardImage.querySelector('img');
+                if (img && img.src) {
+                    openImageModal(img.src);
+                }
+            }
+        });
+
+        // Закрытие модального окна при клике на фон или на кнопку закрытия
+        document.getElementById('imageModal').addEventListener('click', function(e) {
+            if (e.target === this) closeImageModal();
+        });
+
+        // --- Корзина ---
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        function saveCart() { localStorage.setItem('cart', JSON.stringify(cart)); }
+        function updateCartCount() {
+            const total = cart.reduce((sum, i) => sum + i.quantity, 0);
+            document.getElementById('cartCount').textContent = total;
+            document.getElementById('cartIcon').style.color = total > 0 ? '#d32f2f' : '#333';
+        }
+        function addToCart(id, name, price) {
+            const existing = cart.find(i => i.id == id);
+            if (existing) existing.quantity++;
+            else cart.push({ id, name, price, quantity: 1 });
+            saveCart(); updateCartCount(); renderCart();
+            showToast(`"${name}" добавлен`);
+        }
+        function removeFromCart(id) {
+            cart = cart.filter(i => i.id != id);
+            saveCart(); updateCartCount(); renderCart();
+        }
+        function changeQuantity(id, delta) {
+            const item = cart.find(i => i.id == id);
+            if (!item) return;
+            item.quantity += delta;
+            if (item.quantity <= 0) removeFromCart(id);
+            else { saveCart(); updateCartCount(); renderCart(); }
+        }
+        function renderCart() {
+            const container = document.getElementById('cartItems');
+            const totalSpan = document.getElementById('cartTotal');
+            if (cart.length === 0) {
+                container.innerHTML = '<p>Корзина пуста</p>';
+                totalSpan.textContent = '0';
+                document.getElementById('checkoutBtn').style.display = 'none';
+                return;
+            }
+            let html = ''; let total = 0;
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                html += `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-price">${item.price} ₽</div>
+                    </div>
+                    <div class="cart-item-controls">
+                        <button onclick="changeQuantity(${item.id}, -1)">-</button>
+                        <span>${item.quantity}</span>
+                        <button onclick="changeQuantity(${item.id}, 1)">+</button>
+                    </div>
+                    <div class="cart-item-total">${itemTotal} ₽</div>
+                    <button onclick="removeFromCart(${item.id})">✕</button>
+                </div>`;
+            });
+            container.innerHTML = html;
+            totalSpan.textContent = total;
+            document.getElementById('checkoutBtn').style.display = 'block';
+        }
+        function openCart() { renderCart(); document.getElementById('cartModal').classList.add('active'); document.body.style.overflow = 'hidden'; }
+        function closeCart() { document.getElementById('cartModal').classList.remove('active'); document.body.style.overflow = ''; }
+        async function submitOrder() {
+            if (cart.length === 0) return;
+            try {
+                const response = await fetch('/api/order/create', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cart, serve_time: 'now', customer_name: 'Гость', is_main_order: true })
+                });
+                if (!response.ok) throw new Error('Ошибка');
+                const data = await response.json();
+                alert(`Заказ №${data.order_number} принят! Сумма: ${data.total_price} ₽`);
+                cart = [];
+                saveCart(); updateCartCount();
+                closeCart();
+            } catch (e) {
+                alert('Не удалось создать заказ');
+            }
+        }
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
+
+        // Привязка кнопок "В корзину"
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.add-to-cart');
+            if (btn) {
+                e.preventDefault();
+                e.stopPropagation();
+                addToCart(btn.dataset.id, btn.dataset.name, parseInt(btn.dataset.price));
+            }
+        });
+
+        document.getElementById('cartIcon').addEventListener('click', openCart);
+        document.getElementById('cartModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeCart(); });
+        updateCartCount();
+    </script>
 </body>
 </html>
