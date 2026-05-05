@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Камера: {{ cam.name }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0f1a;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .camera-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 { text-align: center; margin-bottom: 20px; font-size: 2rem; }
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 56.25%;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border: none;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 24px;
+            background: #4a5568;
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover { background: #5a6578; }
+    </style>
+</head>
+<body>
+    <div class="camera-container">
+        <h1>{{ cam.name }}</h1>
+        <div class="video-wrapper">
+            <iframe src="{{ cam.url }}" allow="autoplay; fullscreen; clipboard-write; picture-in-picture" allowfullscreen></iframe>
+        </div>
+        <div class="nav-buttons">
+            {% if prev_id is not none %}
+                <a href="/camera/{{ prev_id }}" class="btn">← Назад</a>
+            {% else %}
+                <span class="btn" style="opacity:0.5;">← Назад</span>
+            {% endif %}
+            <a href="/cameras" class="btn">К списку камер</a>
+            {% if next_id is not none %}
+                <a href="/camera/{{ next_id }}" class="btn">Вперед →</a>
+            {% else %}
+                <span class="btn" style="opacity:0.5;">Вперед →</span>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

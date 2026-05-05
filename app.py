@@ -5,11 +5,13 @@ from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from config import Config
 from models import db, Category, MenuItem, Order, OrderItem, GameSession
+from cameras_config import CAMERAS
 
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 migrate = Migrate(app, db)
+
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -74,7 +76,24 @@ def tetris():
 # ---------- Камеры ----------
 @app.route('/cameras')
 def cameras_page():
-    return render_template('cameras.html')
+    return render_template('cameras.html', cameras=CAMERAS)
+
+@app.route('/camera/<int:cam_id>')
+def camera_single(cam_id):
+    cam = next((c for c in CAMERAS if c["id"] == cam_id), None)
+    if not cam:
+        return "Камера не найдена", 404
+
+    # Определяем индексы для навигации
+    ids = [c["id"] for c in CAMERAS]
+    try:
+        idx = ids.index(cam_id)
+    except ValueError:
+        idx = -1
+    prev_id = ids[idx - 1] if idx > 0 else None
+    next_id = ids[idx + 1] if idx != -1 and idx < len(ids) - 1 else None
+
+    return render_template('camera_single.html', cam=cam, prev_id=prev_id, next_id=next_id)
 
 # ---------- API для меню ----------
 @app.route('/api/categories')

@@ -34,3 +34,5 @@ uploads/
 
 # Dishes folder
 **/dishes/
+
+cameras_config.py
