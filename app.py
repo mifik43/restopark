@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from config import Config
-from models import db, Category, MenuItem, Order, OrderItem, GameSession
+from models import db, Category, MenuItem, Order, OrderItem, GameSession, HelpRequest
 from cameras_config import CAMERAS
 
 app = Flask(__name__)
@@ -165,6 +165,18 @@ def api_update_order_status(order_id):
 def generate_order_number():
     import random, string
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+
+
+@app.route('/api/order/<int:order_id>/pay', methods=['POST'])
+def api_pay_order(order_id):
+    order = Order.query.get_or_404(order_id)
+    if order.paid:
+        return jsonify({'error': 'Заказ уже оплачен'}), 400
+    # Имитация оплаты
+    order.paid = True
+    order.status = 'paid'
+    db.session.commit()
+    return jsonify({'status': 'ok', 'order_number': order.order_number})
 
 # ---------- Админ-панель ----------
 def admin_required(f):
@@ -393,6 +405,31 @@ def kitchen_admin():
 def init_db():
     db.create_all()
     print("Database initialized.")
+
+@app.route('/api/help/request', methods=['POST'])
+def api_help_request():
+    data = request.get_json()
+    table = data.get('table', '')
+    req = HelpRequest(table_number=table)
+    db.session.add(req)
+    db.session.commit()
+    return jsonify({'status': 'ok'})
+
+@app.route('/api/help/requests/active')
+def api_help_requests_active():
+    requests = HelpRequest.query.filter_by(resolved=False).order_by(HelpRequest.created_at.desc()).all()
+    return jsonify([{
+        'id': r.id,
+        'table_number': r.table_number,
+        'created_at': r.created_at.isoformat()
+    } for r in requests])
+
+@app.route('/api/help/request/<int:id>/resolve', methods=['POST'])
+def api_help_request_resolve(id):
+    req = HelpRequest.query.get_or_404(id)
+    req.resolved = True
+    db.session.commit()
+    return jsonify({'status': 'ok'})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

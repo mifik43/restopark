@@ -68,6 +68,7 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     order_number = db.Column(db.String(20), unique=True, nullable=False)
     status = db.Column(db.String(20), default='confirmed')
+    paid = db.Column(db.Boolean, default=False)          # <-- новое поле
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     total_price = db.Column(db.Integer, nullable=False)
@@ -115,3 +116,10 @@ class GameSession(db.Model):
     game_id = db.Column(db.String(50), nullable=False)
     start_time = db.Column(db.DateTime, default=datetime.utcnow)
     end_time = db.Column(db.DateTime, nullable=True)
+
+class HelpRequest(db.Model):
+    __tablename__ = 'help_requests'
+    id = db.Column(db.Integer, primary_key=True)
+    table_number = db.Column(db.String(20), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    resolved = db.Column(db.Boolean, default=False)
