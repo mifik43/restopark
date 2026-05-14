@@ -7,6 +7,9 @@
     <title>RESTOPARK — Меню</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
         .category-nav a { font-size: clamp(13px, 2vw, 15px); padding: 8px 14px; }
         .menu-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
@@ -445,6 +448,18 @@
         document.getElementById('cartIcon').addEventListener('click', openCart);
         document.getElementById('cartModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeCart(); });
         updateCartCount();
+        
+        if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/static/service-worker.js')
+                .then(registration => {
+                    console.log('ServiceWorker registered: ', registration.scope);
+                })
+                .catch(error => {
+                    console.log('ServiceWorker registration failed: ', error);
+                });
+        });
+    }
     </script>
 </body>
 </html>

@@ -55,6 +55,11 @@
                         <li class="nav-item">
                             <a class="nav-link {{ 'active' if request.endpoint == 'admin_stats' }}" href="{{ url_for('admin_stats') }}"><i class="bi bi-bar-chart"></i> Статистика игр</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ 'active' if request.endpoint == 'admin_sales' }}" href="{{ url_for('admin_sales') }}">
+                                <i class="bi bi-graph-up"></i> Дашборд продаж
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>

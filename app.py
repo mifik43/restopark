@@ -1,11 +1,12 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
 from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from config import Config
 from models import db, Category, MenuItem, Order, OrderItem, GameSession, HelpRequest
 from cameras_config import CAMERAS
+from sqlalchemy import func, extract
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -384,6 +385,84 @@ def api_game_start():
     db.session.add(session)
     db.session.commit()
     return jsonify({'session_id': session.id})
+
+
+@app.route('/admin/sales')
+@admin_required
+def admin_sales():
+    return render_template('admin/dashboard_sales.html')
+
+@app.route('/api/sales/data')
+@admin_required
+def api_sales_data():
+    # Параметры периода (по умолчанию последние 30 дней)
+    days = request.args.get('days', 30, type=int)
+    end_date = datetime.utcnow()
+    start_date = end_date - timedelta(days=days)
+
+    # 1. Выручка по дням
+    revenue_query = db.session.query(
+        func.date(Order.created_at).label('date'),
+        func.sum(Order.total_price).label('revenue')
+    ).filter(
+        Order.created_at >= start_date,
+        Order.status.in_(['paid', 'cooking', 'ready', 'completed'])
+    ).group_by(func.date(Order.created_at)).order_by('date').all()
+
+    revenue_dates = [r.date.strftime('%d.%m') for r in revenue_query]
+    revenue_values = [float(r.revenue) for r in revenue_query]
+
+    # 2. Топ-блюд (по количеству продаж)
+    top_items_query = db.session.query(
+        MenuItem.name,
+        func.sum(OrderItem.quantity).label('total_qty')
+    ).join(OrderItem).join(Order).filter(
+        Order.created_at >= start_date,
+        Order.status.in_(['paid', 'cooking', 'ready', 'completed'])
+    ).group_by(MenuItem.name).order_by(func.sum(OrderItem.quantity).desc()).limit(10).all()
+
+    top_items_names = [item.name for item in top_items_query]
+    top_items_qty = [item.total_qty for item in top_items_query]
+
+    # 3. Средний чек
+    avg_check_query = db.session.query(
+        func.avg(Order.total_price).label('avg_check')
+    ).filter(
+        Order.created_at >= start_date,
+        Order.status.in_(['paid', 'cooking', 'ready', 'completed'])
+    ).scalar()
+    avg_check = round(float(avg_check_query) if avg_check_query else 0, 2)
+
+    # 4. Загруженность кухни (среднее время от confirmed до cooking)
+    cooking_time_query = db.session.query(
+        func.avg(
+            func.julianday(Order.updated_at) - func.julianday(Order.created_at)
+        ).label('avg_minutes')
+    ).filter(
+        Order.created_at >= start_date,
+        Order.status.in_(['cooking', 'ready', 'completed']),
+        Order.updated_at != None
+    ).scalar()
+
+    avg_cooking_time = round(float(cooking_time_query) * 24 * 60, 1) if cooking_time_query else 0  # в минутах
+
+    # Общая статистика
+    total_orders = Order.query.filter(Order.created_at >= start_date).count()
+    total_revenue = db.session.query(func.sum(Order.total_price)).filter(
+        Order.created_at >= start_date,
+        Order.status.in_(['paid', 'cooking', 'ready', 'completed'])
+    ).scalar() or 0
+
+    return jsonify({
+        'revenue_dates': revenue_dates,
+        'revenue_values': revenue_values,
+        'top_items_names': top_items_names,
+        'top_items_qty': top_items_qty,
+        'avg_check': avg_check,
+        'avg_cooking_time': avg_cooking_time,
+        'total_orders': total_orders,
+        'total_revenue': float(total_revenue)
+    })
 
 @app.route('/api/game/end', methods=['POST'])
 def api_game_end():
