@@ -2,6 +2,19 @@
 {% block title %}Заказы{% endblock %}
 {% block content %}
 <h2>История заказов</h2>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div></div>
+    <div class="btn-group">
+        <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-download"></i> Экспорт
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#exportModal">Настроить экспорт</a></li>
+        </ul>
+    </div>
+</div>
+
 <table class="table table-striped">
     <thead>
         <tr>
@@ -10,6 +23,7 @@
             <th>Сумма</th>
             <th>Статус</th>
             <th>Детали</th>
+            <th>Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -19,12 +33,14 @@
             <td>{{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
             <td>{{ order.total_price }} ₽</td>
             <td>
-                {% if order.status == 'confirmed' %}Принят
-                {% elif order.status == 'cooking' %}Готовится
-                {% elif order.status == 'ready' %}Готов
-                {% elif order.status == 'completed' %}Выдан
-                {% else %}{{ order.status }}
-                {% endif %}
+                {% set status_labels = {
+                    'confirmed': 'Принят',
+                    'cooking': 'Готовится',
+                    'ready': 'Готов',
+                    'completed': 'Выдан',
+                    'paid': 'Оплачен'
+                } %}
+                {{ status_labels.get(order.status, order.status) }}
             </td>
             <td>
                 <ul>
@@ -33,8 +49,56 @@
                     {% endfor %}
                 </ul>
             </td>
+            <td class="table-actions">
+                <a href="{{ url_for('admin_print_receipt', id=order.id) }}" class="btn btn-sm btn-outline-secondary" title="Печать чека">
+                    <i class="bi bi-printer"></i>
+                </a>
+            </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+
+<!-- Модальное окно экспорта -->
+<div class="modal fade" id="exportModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Экспорт заказов</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label>Период (дней)</label>
+                    <input type="number" id="exportDays" class="form-control" value="30" min="1">
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="#" id="exportExcelBtn" class="btn btn-outline-primary">Excel</a>
+                    <a href="#" id="exportCsvBtn" class="btn btn-outline-secondary">CSV</a>
+                    <a href="#" id="exportPrintBtn" class="btn btn-outline-info" target="_blank">Печатная версия</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('exportExcelBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        const days = document.getElementById('exportDays').value;
+        window.location.href = `/admin/orders/export/excel?days=${days}`;
+    });
+    document.getElementById('exportCsvBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        const days = document.getElementById('exportDays').value;
+        window.location.href = `/admin/orders/export/csv?days=${days}`;
+    });
+    document.getElementById('exportPrintBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        const days = document.getElementById('exportDays').value;
+        window.open(`/admin/orders/export/print?days=${days}`, '_blank');
+    });
+</script>
 {% endblock %}

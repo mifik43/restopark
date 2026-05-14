@@ -8,3 +8,10 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
     ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME') or 'admin'
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'admin123'
+
+    PRINTER_TYPE = os.environ.get('PRINTER_TYPE', 'usb')  # usb, network, file
+    PRINTER_USB_VENDOR = 0x04b8  # Пример для Epson
+    PRINTER_USB_PRODUCT = 0x0202
+    PRINTER_NETWORK_HOST = '192.168.1.100'
+    PRINTER_NETWORK_PORT = 9100
+    PRINTER_FILE_PATH = 'receipt.txt'  # для отладки в файл

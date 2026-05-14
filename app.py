@@ -1,12 +1,17 @@
 import os
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, send_file
 from flask_migrate import Migrate
 from werkzeug.utils import secure_filename
 from config import Config
 from models import db, Category, MenuItem, Order, OrderItem, GameSession, HelpRequest
 from cameras_config import CAMERAS
 from sqlalchemy import func, extract
+import csv
+import io
+from openpyxl import Workbook
+from printer import print_receipt, print_kitchen_order
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -509,6 +514,89 @@ def api_help_request_resolve(id):
     req.resolved = True
     db.session.commit()
     return jsonify({'status': 'ok'})
+
+# --- Экспорт заказов ---
+def get_orders_for_period(days):
+    """Возвращает заказы за указанное количество дней (по дате создания)."""
+    since = datetime.utcnow() - timedelta(days=days)
+    return Order.query.filter(Order.created_at >= since).order_by(Order.created_at.desc()).all()
+
+@app.route('/admin/orders/export/excel')
+@admin_required
+def admin_orders_export_excel():
+    days = request.args.get('days', 30, type=int)
+    orders = get_orders_for_period(days)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = f"Заказы за {days} дн."
+    ws.append(["Номер заказа", "Дата", "Сумма", "Статус", "Блюда"])
+
+    for order in orders:
+        items = ', '.join(f"{item.menu_item.name} x{item.quantity}" for item in order.items)
+        ws.append([
+            order.order_number,
+            order.created_at.strftime('%d.%m.%Y %H:%M'),
+            order.total_price,
+            order.status,
+            items
+        ])
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=f'orders_{days}d.xlsx'
+    )
+
+@app.route('/admin/orders/export/csv')
+@admin_required
+def admin_orders_export_csv():
+    days = request.args.get('days', 30, type=int)
+    orders = get_orders_for_period(days)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Номер заказа", "Дата", "Сумма", "Статус", "Блюда"])
+    for order in orders:
+        items = ', '.join(f"{item.menu_item.name} x{item.quantity}" for item in order.items)
+        writer.writerow([
+            order.order_number,
+            order.created_at.strftime('%d.%m.%Y %H:%M'),
+            order.total_price,
+            order.status,
+            items
+        ])
+
+    output.seek(0)
+    return send_file(
+        io.BytesIO(output.getvalue().encode('utf-8')),
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=f'orders_{days}d.csv'
+    )
+
+@app.route('/admin/orders/export/print')
+@admin_required
+def admin_orders_export_print():
+    days = request.args.get('days', 30, type=int)
+    orders = get_orders_for_period(days)
+    return render_template('admin/orders_print.html', orders=orders, days=days)
+
+@app.route('/admin/order/<int:id>/print')
+@admin_required
+def admin_print_receipt(id):
+    order = Order.query.get_or_404(id)
+    try:
+        # Здесь будет вызов печати (пока имитация)
+        flash(f'Чек для заказа {order.order_number} отправлен на печать', 'success')
+    except Exception as e:
+        flash(f'Ошибка печати: {e}', 'danger')
+    return redirect(url_for('admin_orders'))
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

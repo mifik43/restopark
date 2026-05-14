@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Заказы за {{ days }} дней</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+        th { background: #f0f0f0; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <h2>Заказы за последние {{ days }} дней</h2>
+    <button class="no-print" onclick="window.print()">Печать / Сохранить как PDF</button>
+    <table>
+        <tr>
+            <th>Номер</th>
+            <th>Дата</th>
+            <th>Сумма</th>
+            <th>Статус</th>
+            <th>Блюда</th>
+        </tr>
+        {% for order in orders %}
+        <tr>
+            <td>{{ order.order_number }}</td>
+            <td>{{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td>{{ order.total_price }} ₽</td>
+            <td>{{ order.status }}</td>
+            <td>
+                {% for item in order.items %}
+                    {{ item.menu_item.name }} x{{ item.quantity }}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
